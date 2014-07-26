@@ -3,7 +3,7 @@ Section: web
 Priority: optional
 Maintainer: Carl Suster <carl@contraflo.ws>
 Build-Depends: debhelper (>= 7)
-Standards-Version: 3.9.2
+Standards-Version: 3.9.5
 Homepage: http://code.google.com/p/plowshare/
 
 Package: plowshare4

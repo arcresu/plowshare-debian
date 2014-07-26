@@ -23,6 +23,10 @@ build-stamp: configure-stamp
 
 	touch $@
 
+build-arch: build
+
+build-indep: build
+
 clean: 
 	dh_testdir
 	dh_testroot
