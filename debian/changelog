@@ -1,3 +1,9 @@
+plowshare4 (1.0.4-2ubuntu1~1.gbp365eec) trusty; urgency=medium
+
+  ** SNAPSHOT build @365eeccaf26f15ba53152b01dbdda7e28e26ffea **
+
+ -- Carl Suster <carl@contraflo.ws>  Sat, 26 Jul 2014 23:27:35 +1000
+
 plowshare4 (1.0.4-2) trusty; urgency=medium
 
   * New maintainer.
