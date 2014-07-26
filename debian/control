@@ -1,7 +1,7 @@
 Source: plowshare4
 Section: web
 Priority: optional
-Maintainer: Matthieu Crapet <mcrapet@gmail.com>
+Maintainer: Carl Suster <carl@contraflo.ws>
 Build-Depends: debhelper (>= 7)
 Standards-Version: 3.9.2
 Homepage: http://code.google.com/p/plowshare/
