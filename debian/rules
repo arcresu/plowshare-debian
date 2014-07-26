@@ -4,35 +4,14 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-configure: configure-stamp
-configure-stamp:
-	dh_testdir
-
-	# Add here commands to configure the package.
-	#CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" ./configure ...
-
-	touch configure-stamp
-
-build: build-stamp
-build-stamp: configure-stamp  
-	dh_testdir
-
-	# Add here commands to compile the package.
-	#$(MAKE) DESTDIR=$(CURDIR)/debian/plowshare4
-	#docbook-to-man debian/plowshare4.sgml > plowshare4.1
-
-	touch $@
-
-build-arch: build
-
-build-indep: build
+%:
+	dh $@
 
 clean: 
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp configure-stamp
 	# Add here commands to clean up after the build process.
-	#DESTDIR=$(CURDIR)/debian/plowshare4 PREFIX=/usr make uninstall
+	DESTDIR=$(CURDIR)/debian/plowshare4 PREFIX=/usr make uninstall
 	dh_clean 
 
 install: build
@@ -70,7 +49,7 @@ binary-indep: build install
 
 # Build architecture-dependent files here.
 binary-arch: build install
-# We have nothing to do by default.
 
 binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure
+
+.PHONY: build clean binary-indep binary-arch binary install
