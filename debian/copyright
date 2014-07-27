@@ -1,24 +1,28 @@
-It was downloaded from GIT repository at <https://code.google.com/p/plowshare/>.
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: plowshare4
+Upstream-Contact: Matthieu Crapet <mcrapet@gmail.com>
+Source: https://code.google.com/p/plowshare/
+Comment:
+ Please see AUTHORS files for a list of contributors to the plowshare project.
 
-Upstream Author:
+Files: *
+Copyright: 2009-2010 Arnau Sanchez <tokland@gmail.com> 
+           2010-2014 Plowshare team
+License: GPL-3+
 
-    Matthieu Crapet <mcrapet@gmail.com>
-    Please, see AUTHORS files for a list of contributors to the plowshare project.
+Files: debian/*
+Copyright: 2014 Carl Suster <carl@contraflo.ws>
+License: GPL-3+
 
-Copyright:
-
-    Copyright (C) 2009-2010 Arnau Sanchez <tokland@gmail.com> 
-    Copyright (c) 2010-2014 Plowshare team
-
-License: GPL-3
-
-    plowshare is published under the GNU Public License v3 without any
-    warranty implied or otherwise, with no suitability for any purpose.
-    Use this software at your own risk.
-    .
-    On Debian systems, the complete text of the GNU General Public
-    License, version 3, can be found in 
-    /usr/share/common-licenses/GPL-3.
-
-The Debian packaging is (C) 2009, Matthieu Crapet <mcrapet@gmail.com> and
-is licensed under the GPL version 3, see `/usr/share/common-licenses/GPL-3'.
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the Free Software
+ Foundation, either version 3 of the License, or (at your option) any later
+ version.
+ .
+ This program is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ .
+ On Debian systems, the full text of the GNU General Public License version 3
+ can be found in the file `/usr/share/common-licenses/GPL-3'.
