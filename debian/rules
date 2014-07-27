@@ -3,7 +3,6 @@
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
-export PLOWSHARE_FORCE_VERSION=$(shell git describe --always --tags refs/heads/upstream/master)
 
 %:
 	dh $@
