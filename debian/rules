@@ -2,54 +2,25 @@
 # -*- makefile -*-
 
 # Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+export DH_VERBOSE=1
 
 %:
-	dh $@
+	dh $@ --with bash-completion
 
-clean: 
-	dh_testdir
-	dh_testroot
-	# Add here commands to clean up after the build process.
-	DESTDIR=$(CURDIR)/debian/plowshare4 PREFIX=/usr make uninstall
-	dh_clean 
-
-install: build
-	dh_testdir
-	dh_testroot
-	dh_prep
-	dh_installdirs
-
-	# Add here commands to install the package into debian/plowshare4.
-	DESTDIR=$(CURDIR)/debian/plowshare4 PREFIX=/usr make install
-	chmod +x $(CURDIR)/debian/plowshare4/usr/share/plowshare4/core.sh
-	find $(CURDIR)/debian/plowshare4/usr/share/plowshare4/modules/ -name "*.sh" -exec chmod +x {} \;
-
-# Build architecture-independent files here.
-binary-indep: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs
-	dh_installdocs
-	dh_installexamples
-	dh_installman
-	dh_link usr/share/plowshare4/download.sh usr/bin/plowdown
-	dh_link usr/share/plowshare4/upload.sh   usr/bin/plowup
-	dh_link usr/share/plowshare4/delete.sh   usr/bin/plowdel
-	dh_link usr/share/plowshare4/list.sh     usr/bin/plowlist
-	dh_link usr/share/plowshare4/probe.sh    usr/bin/plowprobe
-	dh_strip
-	dh_compress
+override_dh_fixperms:
 	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+	find debian/plowshare4/usr/share/ -name '*.sh' | xargs chmod a+x
 
-# Build architecture-dependent files here.
-binary-arch: build install
+override_dh_bash-completion:
+	dh_bash-completion
+	sed -i -e '/cut/ s,/usr/local,/usr,' \
+		debian/plowshare4/etc/bash_completion.d/plowshare
 
-binary: binary-indep binary-arch
+override_dh_install:
+	dh_install
+	v=$(shell cat debian/git-describe) && \
+		for file in debian/plowshare4/usr/share/plowshare4/*.sh; do \
+			sed -i -e 's/^\(declare -r VERSION=\).*/\1'"'$$v'"'/' "$$file"; \
+		done
 
-.PHONY: build clean binary-indep binary-arch binary install
+override_dh_auto_build override_dh_auto_install:
