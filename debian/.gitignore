@@ -1,0 +1,4 @@
+files
+plowshare4/
+*.debhelper.log
+*.substvars
