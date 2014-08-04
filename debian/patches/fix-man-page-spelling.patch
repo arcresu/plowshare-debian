@@ -1,0 +1,22 @@
+--- a/docs/plowdown.1
++++ b/docs/plowdown.1
+@@ -448,7 +448,7 @@
+ See \fB--captchaprogram\fR, \fB--run-before\fR and \fB--run-after\fR switches.
+ .TP
+ .I ~/.config/plowshare/storage/
+-Directory used for storing data (one file per module) amoung sessions.
++Directory used for storing data (one file per module) among sessions.
+ See \fB--cache=shared\fR switch.
+ .PP
+ The file format is described in
+--- a/docs/plowup.1
++++ b/docs/plowup.1
+@@ -382,7 +382,7 @@
+ Additional directory considered when searching for executable. See \fB--captchaprogram\fR switch.
+ .TP
+ .I ~/.config/plowshare/storage/
+-Directory used for storing data (one file per module) amoung sessions.
++Directory used for storing data (one file per module) among sessions.
+ See \fB--cache=shared\fR switch.
+ .PP
+ The file format is described in
