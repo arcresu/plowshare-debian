@@ -1,3 +1,18 @@
+plowshare4 (1.0.4-14~gitc51b90d-0ppa1) trusty; urgency=low
+
+  [ Matthieu Crapet ]
+  * [ee7a2e7] plowdown, plowprobe: fix, incorrectly identified binary file
+  * [1d3a70c] plowdown, plowup: add --cache switch
+
+  [ Jan ]
+  * [d39be78] rapidgator (login): Handle rare 'heavy usage' issues
+
+  [ Matthieu Crapet ]
+  * [df9a40f] plowdown: add log_notice message for unused command line option(s)
+  * [c51b90d] keep2share (upload): check for expired token
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 04 Aug 2014 21:18:33 +1000
+
 plowshare4 (1.0.4-9~gitff9d0cd-0ppa1) trusty; urgency=medium
 
   [ Matthieu Crapet ]
