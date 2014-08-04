@@ -5,6 +5,8 @@ Maintainer: Carl Suster <carl@contraflo.ws>
 Build-Depends: debhelper (>= 9), bash-completion
 Standards-Version: 3.9.5
 Homepage: http://code.google.com/p/plowshare/
+Vcs-Git: git://github.com/arcresu/plowshare4-debian.git
+Vcs-Browser: https://github.com/arcresu/plowshare4-debian
 
 Package: plowshare4
 Architecture: all
@@ -14,7 +16,22 @@ Suggests: aview | caca-utils
 Replaces: plowshare
 Conflicts: plowshare3
 Description: Download and upload files from file sharing websites
- Plowshare (Bash4 branch) is a command-line (CLI) download/upload tool for
- popular file sharing websites (aka file hosting provider or One-Click hoster).
- With plowshare, you will be able to download or upload files and manage 
- remote folders and link deletion. 
+ Plowshare is a command-line tool for managing files on popular file sharing
+ websites (a.k.a. file hosting providers or One-Click hosters). Plowshare
+ has bash scripts to download or upload files and manage remote folders and
+ link deletion.
+ .
+ Supported sites include: 115.com, 180upload.com, 1fichier, 2shared, 4shared,
+ 4share.vn, anonfiles, anonymousdelivers, bayfiles, bayimg, billion uploads,
+ bitshare, chomikuj, cramit.in, crocko.com, data.hu, dataport.cz, depositfiles,
+ directmirror, divshare, dl.free.fr, embed upload, euroshare.eu, exoshare,
+ extabit, filebin.ca, filecloud.io, filefactory, filemonkey, fileover.net,
+ fileparadox, filepost, filepup.net, filer.net, firedrive, flashx.tv,
+ freakshare, fshare.vn, gamefront, ge.tt, gfile.ru, go4up, hdstream.to,
+ hipfile, jheberg, keep2share, letitbit, mediafire, megashares, mirrorcreator,
+ mirrorupload, multiupload, multiup.org, myvdrive, nakido, netkups, netload.in,
+ nowdownload.co, oboom, pastebin, promptfile, rapidgator, rapidshare, rghost,
+ ryushare, sendspace, sharebeast, share-online.biz, sockshare, solidfiles,
+ tempsend, turbobit.net, ultramegabit.com uploadable.ch, uploaded.net,
+ uploadhero, uploading.com, upstore, uptobox, zalaa, zalil.ru, ziddu,
+ zippyshare.

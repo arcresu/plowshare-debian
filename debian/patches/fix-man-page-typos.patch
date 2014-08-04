@@ -1,0 +1,21 @@
+Fixes a spelling error and a hyphen-encoding error in the man page for plowprobe.
+--- a/docs/plowprobe.1
++++ b/docs/plowprobe.1
+@@ -112,7 +112,7 @@
+ .SS Miscellaneous options
+ .TP
+ .B "   " --follow
+-If no module is found for link, follow HTTP redirects (curl -L). Default is disabled.
++If no module is found for link, follow HTTP redirects (curl \-L). Default is disabled.
+ .TP
+ .B "   " --get-module
+ Echo module name for each URL and exit. Faster than \fB--printf=%m\fR. Useful for wrappers.
+@@ -163,7 +163,7 @@
+ .EE
+ .SS 2) Custom results format
+ .EX
+-# Print links informations: filename and size
++# Print links information: filename and size
+ $ plowprobe \-\-printf '# %f (%s)%n%u%n' http://www.sendspace.com/file/5njdw7
+ .EE
+ 
