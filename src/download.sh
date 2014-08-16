@@ -113,14 +113,14 @@ process_item() {
 }
 
 # Print usage (on stdout)
-# Note: $MODULES is a multi-line list
+# Note: Global array variable MODULES is accessed directly.
 usage() {
     echo 'Usage: plowdown [OPTIONS] [MODULE_OPTIONS] URL|FILE...'
     echo 'Download files from file sharing websites.'
     echo
     echo 'Global options:'
     print_options "$EARLY_OPTIONS$MAIN_OPTIONS"
-    test -z "$1" || print_module_options "$MODULES" DOWNLOAD
+    test -z "$1" || print_module_options MODULES[@] DOWNLOAD
 }
 
 # Mark status of link (inside file or to stdout). See --mark-downloaded switch.
@@ -221,9 +221,10 @@ module_config_need_cookie() {
 # Example: "MODULE_RYUSHARE_DOWNLOAD_FINAL_LINK_NEEDS_EXTRA=(-F "key=value")
 # $1: module name
 # stdout: variable array name (not content)
+# $?: 0 for success (non empty array)
 module_config_need_extra() {
     local -u VAR="MODULE_${1}_DOWNLOAD_FINAL_LINK_NEEDS_EXTRA"
-    test -z "${!VAR}" || echo "${VAR}"
+    test -n "${!VAR}" && echo "${VAR}[@]"
 }
 
 # Example: "MODULE_RYUSHARE_DOWNLOAD_SUCCESSIVE_INTERVAL=10"
@@ -531,11 +532,9 @@ download() {
             :> "$DRESULT"
 
             #  Give extra parameters to curl (custom HTTP headers, ...)
-            ANAME=$(module_config_need_extra "$MODULE")
-            if test -n "$ANAME"; then
-                local -a CURL_EXTRA="$ANAME[@]"
+            if ANAME=$(module_config_need_extra "$MODULE"); then
                 local OPTION
-                for OPTION in "${!CURL_EXTRA}"; do
+                for OPTION in "${!ANAME}"; do
                     log_debug "adding extra curl options: '$OPTION'"
                     CURL_ARGS+=("$OPTION")
                 done
@@ -552,7 +551,6 @@ download() {
             curl_with_log "${CURL_ARGS[@]}" --fail --globoff \
                 -w '%{http_code}\t%{size_download}' \
                 -o "$FILENAME_TMP" "$FILE_URL" >"$DRESULT" || DRETVAL=$?
-
             IFS=$'\t' read -r STATUS FILE_SIZE < "$DRESULT"
             rm -f "$DRESULT"
 
@@ -737,13 +735,14 @@ fi
 
 # Get library directory
 LIBDIR=$(absolute_path "$0")
+readonly LIBDIR
 TMPDIR=${TMPDIR:-/tmp}
 
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-MODULES=$(get_all_modules_list 'download') || exit
-for MODULE in $MODULES; do
+mapfile -t MODULES < <(get_all_modules_list "$LIBDIR" 'download') || exit
+for MODULE in "${MODULES[@]}"; do
     source "$LIBDIR/modules/$MODULE.sh"
 done
 
@@ -755,7 +754,7 @@ test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
 if test "$ALLMODULES"; then
-    for MODULE in $MODULES; do echo "$MODULE"; done
+    for MODULE in "${MODULES[@]}"; do echo "$MODULE"; done
     exit 0
 fi
 
@@ -783,7 +782,7 @@ if [ $# -lt 1 ]; then
     exit $ERR_BAD_COMMAND_LINE
 fi
 
-log_report_info
+log_report_info "$LIBDIR"
 log_report "plowdown version $VERSION"
 
 if [ -n "$EXT_PLOWSHARERC" ]; then
@@ -834,7 +833,7 @@ if [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
     log_debug 'using local ~/.curlrc'
 fi
 
-MODULE_OPTIONS=$(get_all_modules_options "$MODULES" DOWNLOAD)
+MODULE_OPTIONS=$(get_all_modules_options MODULES[@] DOWNLOAD)
 
 # Process command-line (all module options)
 eval "$(process_all_modules_options 'plowdown' "$MODULE_OPTIONS" \
@@ -884,7 +883,7 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
             log_notice "This seems to be a redirection url. Trying with: '$URL'"
         fi
 
-        MODULE=$(get_module "$URL" "$MODULES") || true
+        MODULE=$(get_module "$URL" MODULES[@]) || true
 
         if [ -z "$MODULE" ]; then
             if match_remote_url "$URL"; then
@@ -899,7 +898,7 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
                     URL_TEMP=$(grep_http_header_location_quiet <<< "$HEADERS")
 
                     if [ -n "$URL_TEMP" ]; then
-                        MODULE=$(get_module "$URL_TEMP" "$MODULES") || MRETVAL=$?
+                        MODULE=$(get_module "$URL_TEMP" MODULES[@]) || MRETVAL=$?
                         test "$MODULE" && URL=$URL_TEMP
                     elif test "$NO_MODULE_FALLBACK"; then
                         log_notice 'No module found, do a simple HTTP GET as requested'
@@ -936,13 +935,13 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
                 log_error "Skip: no module for URL ($(basename_url "$URL")/)"
 
             # Check if plowlist can handle $URL
-            if [ -z "$MODULES_LIST" ]; then
-                MODULES_LIST=$(get_all_modules_list 'list' 'download') || true
-                for MODULE in $MODULES_LIST; do
+            if [[ ! $MODULES_LIST ]]; then
+                mapfile -t MODULES_LIST < <(get_all_modules_list "$LIBDIR" 'list' 'download') || true
+                for MODULE in "${MODULES_LIST[@]}"; do
                     source "$LIBDIR/modules/$MODULE.sh"
                 done
             fi
-            MODULE=$(get_module "$URL" "$MODULES_LIST") || true
+            MODULE=$(get_module "$URL" MODULES_LIST[@]) || true
             if [ -n "$MODULE" ]; then
                 log_notice "Note: This URL ($MODULE) is supported by plowlist"
             fi

@@ -74,19 +74,19 @@ absolute_path() {
 }
 
 # Print usage (on stdout)
-# Note: $MODULES is a multi-line list
+# Note: Global array variable MODULES is accessed directly.
 usage() {
     echo 'Usage: plowup [OPTIONS] MODULE [MODULE_OPTIONS] URL|FILE[:DESTNAME]...'
     echo 'Upload files to file sharing websites.'
     echo
     echo 'Global options:'
     print_options "$EARLY_OPTIONS$MAIN_OPTIONS"
-    test -z "$1" || print_module_options "$MODULES" UPLOAD
+    test -z "$1" || print_module_options MODULES[@] UPLOAD
 }
 
 # Check if module name is contained in list
 #
-# $1: module name list (one per line)
+# $1: module list (array name)
 # $2: module name
 # $?: zero for found, non zero otherwie
 # stdout: lowercase module name (if found)
@@ -95,12 +95,12 @@ module_exist() {
     local N2=${N1//./_}
     local MODULE
 
-    while read MODULE; do
+    for MODULE in "${!1}"; do
         if [[ $N1 = $MODULE || $N2 = $MODULE ]]; then
             echo "$MODULE"
             return 0
         fi
-    done <<< "$1"
+    done
     return 1
 }
 
@@ -244,13 +244,14 @@ fi
 
 # Get library directory
 LIBDIR=$(absolute_path "$0")
+readonly LIBDIR
 TMPDIR=${TMPDIR:-/tmp}
 
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-MODULES=$(get_all_modules_list 'upload') || exit
-for MODULE in $MODULES; do
+mapfile -t MODULES < <(get_all_modules_list "$LIBDIR" 'upload') || exit
+for MODULE in "${MODULES[@]}"; do
     source "$LIBDIR/modules/$MODULE.sh"
 done
 
@@ -262,7 +263,7 @@ test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
 if test "$ALLMODULES"; then
-    for MODULE in $MODULES; do echo "$MODULE"; done
+    for MODULE in "${MODULES[@]}"; do echo "$MODULE"; done
     exit 0
 fi
 
@@ -290,7 +291,7 @@ if [ $# -lt 1 ]; then
     exit $ERR_BAD_COMMAND_LINE
 fi
 
-log_report_info
+log_report_info "$LIBDIR"
 log_report "plowup version $VERSION"
 
 if [ -n "$EXT_PLOWSHARERC" ]; then
@@ -339,7 +340,7 @@ if [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
     log_debug 'using local ~/.curlrc'
 fi
 
-MODULE_OPTIONS=$(get_all_modules_options "$MODULES" UPLOAD)
+MODULE_OPTIONS=$(get_all_modules_options MODULES[@] UPLOAD)
 
 # Process command-line (all module options)
 eval "$(process_all_modules_options 'plowup' "$MODULE_OPTIONS" \
@@ -356,7 +357,7 @@ if [ ${#COMMAND_LINE_ARGS[@]} -eq 0 ]; then
 fi
 
 # Check requested module
-MODULE=$(module_exist "$MODULES" "${COMMAND_LINE_ARGS[0]}") || {
+MODULE=$(module_exist MODULES[@] "${COMMAND_LINE_ARGS[0]}") || {
     log_error "plowup: unsupported module (${COMMAND_LINE_ARGS[0]})";
     exit $ERR_NOMODULE;
 }

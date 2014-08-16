@@ -55,7 +55,6 @@ declare -r ERR_FATAL_MULTIPLE=100         # 100 + (n) with n = first error code 
 
 # Global variables used (defined in plow* scripts):
 #   - VERBOSE          Verbosity level (0=none, 1=error, 2=notice, 3=debug, 4=report)
-#   - LIBDIR           Absolute path to plowshare's libdir
 #   - INTERFACE        (curl) Network interface
 #   - MAX_LIMIT_RATE   (curl) Network maximum speed
 #   - MIN_LIMIT_RATE   (curl) Network minimum speed
@@ -86,7 +85,7 @@ declare -r ERR_FATAL_MULTIPLE=100         # 100 + (n) with n = first error code 
 # $1: filename
 logcat_report() {
     if test -s "$1"; then
-        test $VERBOSE -ge 4 && \
+        test $VERBOSE -lt 4 || \
             stderr "$(sed -e 's/^/rep:/' "$1")"
     fi
     return 0
@@ -94,24 +93,20 @@ logcat_report() {
 
 # This should not be called within modules
 log_report() {
-    test $VERBOSE -ge 4 && stderr "rep: $@"
-    return 0
+    test $VERBOSE -lt 4 || stderr "rep: $@"
 }
 
 log_debug() {
-    test $VERBOSE -ge 3 && stderr "dbg: $@"
-    return 0
+    test $VERBOSE -lt 3 || stderr "dbg: $@"
 }
 
 # This should not be called within modules
 log_notice() {
-    test $VERBOSE -ge 2 && stderr "$@"
-    return 0
+    test $VERBOSE -lt 2 || stderr "$@"
 }
 
 log_error() {
-    test $VERBOSE -ge 1 && stderr "$@"
-    return 0
+    test $VERBOSE -lt 1 || stderr "$@"
 }
 
 ## ----------------------------------------------------------------------------
@@ -1403,9 +1398,8 @@ captcha_process() {
             fi
 
             if check_exec identify; then
-                local DIMENSION=$(identify -quiet "$FILENAME" | cut -d' ' -f3)
-                local W=${DIMENSION%x*}
-                local H=${DIMENSION#*x}
+                local -i W H
+                read -r W H < <(identify -quiet -format '%w %h' "$FILENAME")
                 [ "$W" -lt "$MAX_OUTPUT_WIDTH" ] && MAX_OUTPUT_WIDTH=$W
                 [ "$H" -lt "$MAX_OUTPUT_HEIGHT" ] && MAX_OUTPUT_HEIGHT=$H
             fi
@@ -2566,7 +2560,7 @@ timeout_init() {
 
 # Show help info for options
 #
-# $1: options
+# $1: options (one per line)
 # $2: indent string
 print_options() {
     local -r INDENT=${2:-'  '}
@@ -2597,41 +2591,44 @@ print_options() {
 
 # Show usage info for modules
 #
-# $1: module name list (one per line)
+# $1: module list (array name)
 # $2: option family name (string, example:UPLOAD)
 print_module_options() {
-    while read -r; do
-        local OPTIONS=$(get_module_options "$REPLY" "$2")
+    local ELT OPTIONS
+    for ELT in "${!1}"; do
+        OPTIONS=$(get_module_options "$ELT" "$2")
         if test "$OPTIONS"; then
             echo
-            echo "Options for module <$REPLY>:"
+            echo "Options for module <$ELT>:"
             print_options "$OPTIONS"
         fi
-    done <<< "$1"
+    done
 }
 
 # Get all modules options with specified family name
 #
-# $1: module name list (one per line)
+# $1: module list (array name)
 # $2: option family name (string, example:UPLOAD)
 get_all_modules_options() {
-    while read -r; do
-        get_module_options "$REPLY" "$2"
-    done <<< "$1"
+    local ELT
+    for ELT in "${!1}"; do
+        get_module_options "$ELT" "$2"
+    done
 }
 
 # Get module name from URL link
 #
 # $1: url
-# $2: module name list (one per line)
+# $2: module list (array name)
 get_module() {
-    while read -r; do
-        local -u VAR="MODULE_${REPLY}_REGEXP_URL"
+    local ELT
+    for ELT in "${!2}"; do
+        local -u VAR="MODULE_${ELT}_REGEXP_URL"
         if match "${!VAR}" "$1"; then
-            echo "$REPLY"
+            echo "$ELT"
             return 0
         fi
-    done <<< "$2"
+    done
     return $ERR_NOMODULE
 }
 
@@ -2668,25 +2665,25 @@ process_module_options() {
 }
 
 # Get module list according to capability
-# Note1: use global variable LIBDIR
-# Note2: VERBOSE (log_debug) not initialised yet
+# Note1: VERBOSE (log_debug) not initialised yet
 #
-# $1: feature to grep (must not contain '|' char)
-# $2 (optional): feature to subtract (must not contain '|' char)
+# $1: absolute path to plowshare's libdir
+# $2: feature to grep (must not contain '|' char)
+# $3 (optional): feature to subtract (must not contain '|' char)
 # stdout: return module list (one name per line)
 get_all_modules_list() {
-    local -r CONFIG="$LIBDIR/modules/config"
+    local -r CONFIG="$1/modules/config"
 
     if [ ! -f "$CONFIG" ]; then
         stderr "can't find config file"
         return $ERR_SYSTEM
     fi
 
-    if test "$2"; then
-        sed -ne "/^[^#]/{/|[[:space:]]*$1/{/|[[:space:]]*$2/!s/^\([^[:space:]|]*\).*/\1/p}}" \
+    if test "$3"; then
+        sed -ne "/^[^#]/{/|[[:space:]]*$2/{/|[[:space:]]*$3/!s/^\([^[:space:]|]*\).*/\1/p}}" \
             "$CONFIG"
     else
-        sed -ne "/^[^#]/{/|[[:space:]]*$1/s/^\([^[:space:]|]*\).*/\1/p}" \
+        sed -ne "/^[^#]/{/|[[:space:]]*$2/s/^\([^[:space:]|]*\).*/\1/p}" \
             "$CONFIG"
     fi
 }
@@ -2802,7 +2799,9 @@ process_configfile_module_options() {
 }
 
 # Get system information.
+# $1: absolute path to plowshare's libdir
 log_report_info() {
+    local -r LIBDIR1=$1
     local G GIT_DIR LIBDIR2
 
     if test $VERBOSE -ge 4; then
@@ -2819,11 +2818,11 @@ log_report_info() {
         fi
         check_exec 'gsed' && G=g
         log_report "[sed ] $(${G}sed --version | sed -ne '/version/p')"
-        log_report "[lib ] '$LIBDIR'"
+        log_report "[lib ] '$LIBDIR1'"
 
         # Having several installations is usually a source of issues
         for LIBDIR2 in '/usr/share/plowshare4' '/usr/local/share/plowshare4'; do
-            if [ "$LIBDIR2" != "$LIBDIR" -a -f "$LIBDIR2/core.sh" ]; then
+            if [ "$LIBDIR2" != "$LIBDIR1" -a -f "$LIBDIR2/core.sh" ]; then
                 log_report "[lib2] '$LIBDIR2'"
             fi
         done
@@ -2932,6 +2931,7 @@ handle_tokens() {
 
 stderr() {
     echo "$@" >&2
+    return 0
 }
 
 # This function shell-quotes the argument ($1)

@@ -1,6 +1,4 @@
-#!/bin/bash
-#
-# rapidgator.net module
+# Plowshare rapidgator.net module
 # Copyright (c) 2012-2014 Plowshare team
 #
 # This file is part of Plowshare.
@@ -112,7 +110,6 @@ rapidgator_login() {
             fi
 
             captcha_ack "$ID"
-            STATUS=$(parse_cookie_quiet 'user__' < "$COOKIE_FILE")
 
         else
             local FORM=$(grep_form_by_id_quiet "$HTML" 'registration')
@@ -120,6 +117,8 @@ rapidgator_login() {
             return $ERR_FATAL
         fi
     fi
+
+    STATUS=$(parse_cookie_quiet 'user__' < "$COOKIE_FILE")
 
     if [ -z "$STATUS" ]; then
         if match 'Error e-mail or password' "$HTML"; then
@@ -268,6 +267,14 @@ rapidgator_download() {
 
     # If this is a premium download, we already have the download link
     if [ "$ACCOUNT" = 'premium' ]; then
+        # Consider errors (enforced limits) which only occur for premium users
+        # You have reached quota of downloaded information for premium accounts
+        if match 'reached quota of downloaded information' "$HTML"; then
+            log_error 'Quota exceeded.'
+            echo 3600
+            return $ERR_LINK_TEMP_UNAVAILABLE
+        fi
+
         # Extract premium download link from page
         if match 'Click here to download' "$HTML"; then
             parse 'premium_download_link' "'\(.\+\)'" <<< "$HTML" || return
