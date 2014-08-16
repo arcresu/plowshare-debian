@@ -1,3 +1,32 @@
+plowshare4 (1.0.4-29~git0e5c891-0ppa1) trusty; urgency=medium
+
+  [ Carl Suster ]
+  * [937ef2e] man pages: fixes (typos, spelling and a hyphen-encoding error)
+
+  [ Jan ]
+  * [09b6c6d] uptobox (download): fix, upstream changed
+
+  [ Matthieu Crapet ]
+  * [d680ea3] modules: drop uneeded shebang line
+  * [4768696] core.sh (log_*): minor, make it smaller (faster?)
+  * [f4de46d] core.sh: don't read directly LIBDIR variable anymore
+  * [71969b9] anonfiles: fix upload (new api url)
+  * [c4a9712] keep2share (download): add premium support
+  * [0daf357] plowdown: fix MODULE_xxx_DOWNLOAD_FINAL_LINK_NEEDS_EXTRA with bash 4.3
+
+  [ Jan ]
+  * [6f25547] rapidgator (login): fix, reparse login cookie properly
+  * [86a6717] rapidgator (download): Consider quota error for premium users
+
+  [ Matthieu Crapet ]
+  * [c142ec8] core.sh (print_module_options, get_all_modules_options, get_module): use array reference
+  * [08993bd] core.sh (captcha_process): better call for identify (ImageMagick)
+  * [cb3a328] Makefile: uninstall bash-completion files
+  * [c36dcc8] plowup: fix module_exist()
+  * [0e5c891] oboom: fix login
+
+ -- Carl Suster <carl@contraflo.ws>  Sat, 16 Aug 2014 15:36:03 +1000
+
 plowshare4 (1.0.4-14~gitc51b90d-0ppa1) trusty; urgency=low
 
   [ Matthieu Crapet ]
@@ -10,6 +39,8 @@ plowshare4 (1.0.4-14~gitc51b90d-0ppa1) trusty; urgency=low
   [ Matthieu Crapet ]
   * [df9a40f] plowdown: add log_notice message for unused command line option(s)
   * [c51b90d] keep2share (upload): check for expired token
+
+  [ Carl Suster ]
 
  -- Carl Suster <carl@contraflo.ws>  Mon, 04 Aug 2014 21:18:33 +1000
 
