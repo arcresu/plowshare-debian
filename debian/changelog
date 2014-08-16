@@ -1,4 +1,4 @@
-plowshare4 (1.0.4-29~git0e5c891-0ppa1) trusty; urgency=medium
+plowshare4 (1.0.4-29~git0e5c891-0ppa2) trusty; urgency=medium
 
   [ Carl Suster ]
   * [937ef2e] man pages: fixes (typos, spelling and a hyphen-encoding error)
