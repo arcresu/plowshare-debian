@@ -1,3 +1,10 @@
+plowshare4 (1.0.4-30~gitc26cc3c-0ppa1) trusty; urgency=medium
+
+  [ Jan ]
+  * [c26cc3c] netload_in (download): fix, site uses Recaptcha now
+
+ -- Carl Suster <carl@contraflo.ws>  Sat, 23 Aug 2014 13:15:49 +1000
+
 plowshare4 (1.0.4-29~git0e5c891-0ppa2) trusty; urgency=medium
 
   [ Carl Suster ]
