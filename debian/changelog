@@ -1,5 +1,5 @@
-plowshare4 (1.0.4-1) unstable; urgency=low
+plowshare4 (1.0.4-1ubuntu1) trusty; urgency=low
 
-  * Initial release. (Closes: #599924)
+  * Initial release.
 
  -- Carl Suster <carl@contraflo.ws>  Sat, 26 Jul 2014 16:38:56 +1000
