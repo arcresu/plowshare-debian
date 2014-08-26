@@ -1,3 +1,11 @@
+plowshare4 (1.0.4-32~git5802090-0ppa1) trusty; urgency=medium
+
+  [ Matthieu Crapet ]
+  * [78324c6] anonymousdelivers.us: drop module
+  * [5802090] extabit.com: drop module
+
+ -- Carl Suster <carl@contraflo.ws>  Tue, 26 Aug 2014 13:17:30 +1000
+
 plowshare4 (1.0.4-30~gitc26cc3c-0ppa1) trusty; urgency=medium
 
   [ Jan ]
