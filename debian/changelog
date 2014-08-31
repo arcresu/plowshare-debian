@@ -1,3 +1,10 @@
+plowshare4 (1.0.5-1) unstable; urgency=medium
+
+  * New upstream release.
+  * fix-man-page-typos.patch now fixed in upstream.
+
+ -- Carl Suster <carl@contraflo.ws>  Sun, 31 Aug 2014 18:53:00 +1000
+
 plowshare4 (1.0.4-1) unstable; urgency=low
 
   * Initial release. (Closes: #599924)
