@@ -6,7 +6,6 @@
 4share_vn       | download | upload |        | list | probe |
 4shared         | download | upload |        | list | probe |
 anonfiles       | download | upload |        |      | probe |
-anonymousdelivers|download | upload |        |      | probe |
 bayfiles        | download | upload | delete |      | probe |
 bayimg          | download | upload | delete |      | probe |
 billionuploads  | download | upload |        |      | probe |
@@ -22,7 +21,6 @@ divshare        | download | upload | delete | list | probe |
 dl_free_fr      | download | upload | delete |      | probe |
 embedupload     |          |        |        | list |       |
 euroshare_eu    | download | upload | delete |      | probe |
-extabit         | download | upload |        |      | probe |
 exoshare        |          | upload |        | list |       |
 filebin_ca      | download | upload |        |      | probe |
 filecloud       | download | upload |        | list | probe |
@@ -69,7 +67,7 @@ sharebeast      | download | upload | delete |      | probe |
 shareonline_biz | download | upload |        |      | probe |
 sockshare       | download | upload | delete | list | probe |
 solidfiles      | download | upload |        | list | probe |
-tempsend        |          | upload |        |      |       |
+tempsend        | download | upload |        |      |       |
 turbobit        | download | upload | delete | list | probe |
 ultramegabit    | download | upload |        |      | probe |
 uploadable_ch   | download | upload | delete | list | probe |

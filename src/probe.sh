@@ -29,7 +29,7 @@ EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file 
 NO_PLOWSHARERC,,no-plowsharerc,,Do not use any plowshare.conf configuration file"
 
 declare -r MAIN_OPTIONS="
-VERBOSE,v,verbose,V=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
+VERBOSE,v,verbose,c|0|1|2|3|4=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
 QUIET,q,quiet,,Alias for -v0
 GET_MODULE,,get-module,,Retrieve module name and exit. Faster than --printf=%m
 INTERFACE,i,interface,s=IFACE,Force IFACE network interface
@@ -69,11 +69,20 @@ process_item() {
     if match_remote_url "$ITEM"; then
         strip <<< "$ITEM"
     elif [ -f "$ITEM" ]; then
-        if [[ $ITEM =~ (zip|rar|tar|[7gx]z|bz2|mp[234g]|avi|mkv|jpg)$ ]]; then
-            log_error "Skip: '$ITEM' seems to be a binary file, not a list of links"
+        local MATCH
+
+        if check_exec 'file'; then
+            [[ $(file -i "$ITEM") =~ \ charset=binary$ ]] && MATCH=1
         else
+            [[ $ITEM =~ \.(zip|rar|tar|[7gx]z|bz2|mp[234g]|avi|mkv|jpg)$ ]] && MATCH=1
+        fi
+
+        if [ -z "$MATCH" ]; then
             # Discard empty lines and comments
+            echo 'file'
             sed -ne '/^[[:space:]]*[^#[:space:]]/{s/^[[:space:]]*//; s/[[:space:]]*$//; p}' "$ITEM"
+        else
+            log_error "Skip: '$ITEM' seems to be a binary file, not a list of links"
         fi
     else
         log_error "Skip: cannot stat '$ITEM': No such file or directory"
@@ -81,14 +90,14 @@ process_item() {
 }
 
 # Print usage (on stdout)
-# Note: $MODULES is a multi-line list
+# Note: Global array variable MODULES is accessed directly.
 usage() {
     echo 'Usage: plowprobe [OPTIONS] [MODULE_OPTIONS] URL|FILE...'
     echo 'Retrieve metadata from file sharing download links.'
     echo
     echo 'Global options:'
     print_options "$EARLY_OPTIONS$MAIN_OPTIONS"
-    test -z "$1" || print_module_options "$MODULES" PROBE
+    test -z "$1" || print_module_options MODULES[@] PROBE
 }
 
 # Note: Global option $PRINTF_FORMAT is accessed directly.
@@ -99,7 +108,7 @@ probe() {
 
     local URL_ENCODED=$(uri_encode <<< "$URL_RAW")
     local FUNCTION=${MODULE}_probe
-    local MAP I CHECK_LINK CAPS FILE_NAME FILE_SIZE FILE_HASH FILE_ID
+    local MAP I CHECK_LINK CAPS FILE_NAME FILE_SIZE FILE_HASH FILE_ID FILE_TS
     local -a DATA
 
     log_debug "Starting probing ($MODULE): $URL_ENCODED"
@@ -109,15 +118,18 @@ probe() {
 
     # Capabilities:
     # - c: check link (module function return value)
-    # - f: filename (can be empty string if not available)
-    # - h: filehash (can be empty string if not available)
-    # - i: fileid (can be empty string if not available)
-    # - s: filesize (in bytes). This can be approximative.
+    # - f: filename [1]
+    # - h: filehash, unspecific digest [1]
+    # - i: fileid [1]
+    # - s: filesize in bytes. This can be approximative. [1]
+    # - t: file timestamp, unspecific time format [1]
+    #
+    # [1] Can be empty string if not available.
     CHECK_LINK=0
 
     if test "$PRINTF_FORMAT"; then
         CAPS=c
-        for I in f h i s; do
+        for I in f h i s t; do
             [[ ${PRINTF_FORMAT,,} = *%$I* ]] && CAPS+=$I
         done
     else
@@ -149,6 +161,9 @@ probe() {
                 s)
                     FILE_SIZE=${DATA[$I]}
                     ;;
+                t)
+                    FILE_TS=${DATA[$I]}
+                    ;;
                 *)
                     log_error "plowprobe: unknown capability \`${MAP:$I:1}', ignoring"
                     ;;
@@ -174,7 +189,7 @@ probe() {
             log_debug "Link active: $URL_ENCODED"
         fi
 
-        DATA=("$MODULE" "$URL_RAW" "$CHECK_LINK" "$FILE_NAME" "$FILE_SIZE" "$FILE_HASH" "$FILE_ID")
+        DATA=("$MODULE" "$URL_RAW" "$CHECK_LINK" "$FILE_NAME" "$FILE_SIZE" "$FILE_HASH" "$FILE_ID" "$FILE_TS")
         pretty_print DATA[@] "${PRINTF_FORMAT:-%F%u%n}"
 
     elif [ $CHECK_LINK -eq $ERR_LINK_DEAD ]; then
@@ -198,6 +213,7 @@ probe() {
 # %s: filesize (in bytes) or empty string (if not available).
 #     Note: it's often approximative.
 # %u: download url
+# %T: timestamp or empty string (if not available).
 # and also:
 # %n: newline
 # %t: tabulation
@@ -209,7 +225,7 @@ probe() {
 pretty_check() {
     # This must be non greedy!
     local S TOKEN
-    S=${1//%[cfFhimsunt%]}
+    S=${1//%[cfFhimsuTnt%]}
     TOKEN=$(parse_quiet . '\(%.\)' <<< "$S")
     if [ -n "$TOKEN" ]; then
         log_error "Bad format string: unknown sequence << $TOKEN >>"
@@ -217,7 +233,7 @@ pretty_check() {
     fi
 }
 
-# $1: array[@] (module, dl_url, check_link, file_name, file_size, file_hash, file_id)
+# $1: array[@] (module, dl_url, check_link, file_name, file_size, file_hash, file_id, timestamp)
 # $2: format string
 pretty_print() {
     local -a A=("${!1}")
@@ -237,7 +253,7 @@ pretty_print() {
 
     handle_tokens "$FMT" '%raw,%' '%t,	' "%n,$CR" \
         "%m,${A[0]}" "%u,${A[1]}" "%c,${A[2]}" "%f,${A[3]}" \
-        "%s,${A[4]}" "%h,${A[5]}" "%i,${A[6]}"
+        "%s,${A[4]}" "%h,${A[5]}" "%i,${A[6]}" "%T,${A[7]}"
 }
 
 #
@@ -246,12 +262,14 @@ pretty_print() {
 
 # Get library directory
 LIBDIR=$(absolute_path "$0")
+readonly LIBDIR
+TMPDIR=${TMPDIR:-/tmp}
 
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-MODULES=$(get_all_modules_list 'probe') || exit
-for MODULE in $MODULES; do
+mapfile -t MODULES < <(get_all_modules_list "$LIBDIR" 'probe') || exit
+for MODULE in "${MODULES[@]}"; do
     source "$LIBDIR/modules/$MODULE.sh"
 done
 
@@ -263,7 +281,7 @@ test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
 if test "$ALLMODULES"; then
-    for MODULE in $MODULES; do echo "$MODULE"; done
+    for MODULE in "${MODULES[@]}"; do echo "$MODULE"; done
     exit 0
 fi
 
@@ -291,7 +309,7 @@ if [ $# -lt 1 ]; then
     exit $ERR_BAD_COMMAND_LINE
 fi
 
-log_report_info
+log_report_info "$LIBDIR"
 log_report "plowprobe version $VERSION"
 
 if [ -n "$EXT_PLOWSHARERC" ]; then
@@ -310,7 +328,7 @@ if [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
     log_debug 'using local ~/.curlrc'
 fi
 
-MODULE_OPTIONS=$(get_all_modules_options "$MODULES" PROBE)
+MODULE_OPTIONS=$(get_all_modules_options MODULES[@] PROBE)
 
 # Process command-line (all module options)
 eval "$(process_all_modules_options 'plowprobe' "$MODULE_OPTIONS" \
@@ -346,7 +364,7 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
 
     for URL in "${ELEMENTS[@]}"; do
         PRETVAL=0
-        MODULE=$(get_module "$URL" "$MODULES") || true
+        MODULE=$(get_module "$URL" MODULES[@]) || true
 
         if [ -z "$MODULE" ]; then
             if match_remote_url "$URL"; then
@@ -360,7 +378,7 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
                     URL_TEMP=$(grep_http_header_location_quiet <<< "$HEADERS")
 
                     if [ -n "$URL_TEMP" ]; then
-                        MODULE=$(get_module "$URL_TEMP" "$MODULES") || PRETVAL=$?
+                        MODULE=$(get_module "$URL_TEMP" MODULES[@]) || PRETVAL=$?
                         test "$MODULE" && URL=$URL_TEMP
                     else
                         match 'https\?://[[:digit:]]\{1,3\}\.[[:digit:]]\{1,3\}\.[[:digit:]]\{1,3\}\.[[:digit:]]\{1,3\}/' \
@@ -383,13 +401,13 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
                 log_error "Skip: no module for URL ($(basename_url "$URL")/)"
 
             # Check if plowlist can handle $URL
-            if [ -z "$MODULES_LIST" ]; then
-                MODULES_LIST=$(get_all_modules_list 'list' 'probe') || true
-                for MODULE in $MODULES_LIST; do
+            if [[ ! $MODULES_LIST ]]; then
+                mapfile -t MODULES_LIST < <(get_all_modules_list "$LIBDIR" 'list' 'probe') || true
+                for MODULE in "${MODULES_LIST[@]}"; do
                     source "$LIBDIR/modules/$MODULE.sh"
                 done
             fi
-            MODULE=$(get_module "$URL" "$MODULES_LIST") || true
+            MODULE=$(get_module "$URL" MODULES_LIST[@]) || true
             if [ -n "$MODULE" ]; then
                 log_notice "Note: This URL ($MODULE) is supported by plowlist"
             fi

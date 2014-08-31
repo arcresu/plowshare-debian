@@ -29,7 +29,7 @@ EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file 
 NO_PLOWSHARERC,,no-plowsharerc,,Do not use any plowshare.conf configuration file"
 
 declare -r MAIN_OPTIONS="
-VERBOSE,v,verbose,V=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
+VERBOSE,v,verbose,c|0|1|2|3|4=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
 QUIET,q,quiet,,Alias for -v0
 INTERFACE,i,interface,s=IFACE,Force IFACE network interface
 CAPTCHA_METHOD,,captchamethod,s=METHOD,Force specific captcha solving method. Available: online, imgur, x11, fb, nox, none.
@@ -64,14 +64,14 @@ absolute_path() {
 }
 
 # Print usage (on stdout)
-# Note: $MODULES is a multi-line list
+# Note: Global array variable MODULES is accessed directly.
 usage() {
     echo 'Usage: plowdel [OPTIONS] [MODULE_OPTIONS] URL...'
     echo 'Delete files from file sharing websites links.'
     echo
     echo 'Global options:'
     print_options "$EARLY_OPTIONS$MAIN_OPTIONS"
-    test -z "$1" || print_module_options "$MODULES" DELETE
+    test -z "$1" || print_module_options MODULES[@] DELETE
 }
 
 #
@@ -80,12 +80,14 @@ usage() {
 
 # Get library directory
 LIBDIR=$(absolute_path "$0")
+readonly LIBDIR
+TMPDIR=${TMPDIR:-/tmp}
 
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-MODULES=$(get_all_modules_list 'delete') || exit
-for MODULE in $MODULES; do
+mapfile -t MODULES < <(get_all_modules_list "$LIBDIR" 'delete') || exit
+for MODULE in "${MODULES[@]}"; do
     source "$LIBDIR/modules/$MODULE.sh"
 done
 
@@ -97,7 +99,7 @@ test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
 if test "$ALLMODULES"; then
-    for MODULE in $MODULES; do echo "$MODULE"; done
+    for MODULE in "${MODULES[@]}"; do echo "$MODULE"; done
     exit 0
 fi
 
@@ -147,7 +149,7 @@ else
     [ -n "$CAPTCHA_DEATHBY" ] && log_debug 'plowdel: --deathbycaptcha selected'
 fi
 
-MODULE_OPTIONS=$(get_all_modules_options "$MODULES" DELETE)
+MODULE_OPTIONS=$(get_all_modules_options MODULES[@] DELETE)
 
 # Process command-line (all module options)
 eval "$(process_all_modules_options 'plowdel' "$MODULE_OPTIONS" \
@@ -170,7 +172,7 @@ DCOOKIE=$(create_tempfile) || exit
 for URL in "${COMMAND_LINE_ARGS[@]}"; do
     DRETVAL=0
 
-    MODULE=$(get_module "$URL" "$MODULES") || DRETVAL=$?
+    MODULE=$(get_module "$URL" MODULES[@]) || DRETVAL=$?
     if [ $DRETVAL -ne 0 ]; then
         if ! match_remote_url "$URL"; then
             log_error "Skip: not an URL ($URL)"
