@@ -1,3 +1,10 @@
+plowshare4 (1.0.5-0ppa1) trusty; urgency=medium
+
+  [ Matthieu Crapet ]
+  * [77d7e16] plowprobe: add %T token (file timestamp) to --printf switch
+
+ -- Carl Suster <carl@contraflo.ws>  Sun, 31 Aug 2014 18:44:22 +1000
+
 plowshare4 (1.0.4-32~git5802090-0ppa1) trusty; urgency=medium
 
   [ Matthieu Crapet ]
