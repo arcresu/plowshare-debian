@@ -29,7 +29,7 @@ EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file 
 NO_PLOWSHARERC,,no-plowsharerc,,Do not use any plowshare.conf configuration file"
 
 declare -r MAIN_OPTIONS="
-VERBOSE,v,verbose,V=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
+VERBOSE,v,verbose,c|0|1|2|3|4=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
 QUIET,q,quiet,,Alias for -v0
 MAX_LIMIT_RATE,,max-rate,r=SPEED,Limit maximum speed to bytes/sec (accept usual suffixes)
 MIN_LIMIT_RATE,,min-rate,r=SPEED,Limit minimum speed to bytes/sec (during 30 seconds)
@@ -37,6 +37,7 @@ INTERFACE,i,interface,s=IFACE,Force IFACE network interface
 TIMEOUT,t,timeout,n=SECS,Timeout after SECS seconds of waits
 MAXRETRIES,r,max-retries,N=NUM,Set maximum retries for upload failures (fatal, network errors). Default is 0 (no retry).
 NAME_FORMAT,,name,s=FORMAT,Format destination filename (applies on each file argument). Default string is: \"%f\".
+CACHE,,cache,C|none|session|shared=METHOD,Policy for storage data. Available: none, session (default), shared.
 CAPTCHA_METHOD,,captchamethod,s=METHOD,Force specific captcha solving method. Available: online, imgur, x11, fb, nox, none.
 CAPTCHA_PROGRAM,,captchaprogram,F=PROGRAM,Call external program/script for captcha solving.
 CAPTCHA_9KWEU,,9kweu,s=KEY,9kw.eu captcha (API) key
@@ -73,19 +74,19 @@ absolute_path() {
 }
 
 # Print usage (on stdout)
-# Note: $MODULES is a multi-line list
+# Note: Global array variable MODULES is accessed directly.
 usage() {
     echo 'Usage: plowup [OPTIONS] MODULE [MODULE_OPTIONS] URL|FILE[:DESTNAME]...'
     echo 'Upload files to file sharing websites.'
     echo
     echo 'Global options:'
     print_options "$EARLY_OPTIONS$MAIN_OPTIONS"
-    test -z "$1" || print_module_options "$MODULES" UPLOAD
+    test -z "$1" || print_module_options MODULES[@] UPLOAD
 }
 
 # Check if module name is contained in list
 #
-# $1: module name list (one per line)
+# $1: module list (array name)
 # $2: module name
 # $?: zero for found, non zero otherwie
 # stdout: lowercase module name (if found)
@@ -94,12 +95,12 @@ module_exist() {
     local N2=${N1//./_}
     local MODULE
 
-    while read MODULE; do
+    for MODULE in "${!1}"; do
         if [[ $N1 = $MODULE || $N2 = $MODULE ]]; then
             echo "$MODULE"
             return 0
         fi
-    done <<< "$1"
+    done
     return 1
 }
 
@@ -243,12 +244,14 @@ fi
 
 # Get library directory
 LIBDIR=$(absolute_path "$0")
+readonly LIBDIR
+TMPDIR=${TMPDIR:-/tmp}
 
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-MODULES=$(get_all_modules_list 'upload') || exit
-for MODULE in $MODULES; do
+mapfile -t MODULES < <(get_all_modules_list "$LIBDIR" 'upload') || exit
+for MODULE in "${MODULES[@]}"; do
     source "$LIBDIR/modules/$MODULE.sh"
 done
 
@@ -260,7 +263,7 @@ test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
 if test "$ALLMODULES"; then
-    for MODULE in $MODULES; do echo "$MODULE"; done
+    for MODULE in "${MODULES[@]}"; do echo "$MODULE"; done
     exit 0
 fi
 
@@ -288,7 +291,7 @@ if [ $# -lt 1 ]; then
     exit $ERR_BAD_COMMAND_LINE
 fi
 
-log_report_info
+log_report_info "$LIBDIR"
 log_report "plowup version $VERSION"
 
 if [ -n "$EXT_PLOWSHARERC" ]; then
@@ -337,7 +340,7 @@ if [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
     log_debug 'using local ~/.curlrc'
 fi
 
-MODULE_OPTIONS=$(get_all_modules_options "$MODULES" UPLOAD)
+MODULE_OPTIONS=$(get_all_modules_options MODULES[@] UPLOAD)
 
 # Process command-line (all module options)
 eval "$(process_all_modules_options 'plowup' "$MODULE_OPTIONS" \
@@ -354,7 +357,7 @@ if [ ${#COMMAND_LINE_ARGS[@]} -eq 0 ]; then
 fi
 
 # Check requested module
-MODULE=$(module_exist "$MODULES" "${COMMAND_LINE_ARGS[0]}") || {
+MODULE=$(module_exist MODULES[@] "${COMMAND_LINE_ARGS[0]}") || {
     log_error "plowup: unsupported module (${COMMAND_LINE_ARGS[0]})";
     exit $ERR_NOMODULE;
 }
@@ -450,6 +453,12 @@ for FILE in "${COMMAND_LINE_ARGS[@]}"; do
     timeout_init $TIMEOUT
 
     TRY=0
+
+    # Module storage policy (part 1/2)
+    if [ "$CACHE" = 'none' ]; then
+        storage_reset
+    fi
+
     ${MODULE}_vars_set
 
     while :; do
@@ -521,6 +530,11 @@ for FILE in "${COMMAND_LINE_ARGS[@]}"; do
     fi
     RETVALS=(${RETVALS[@]} $URETVAL)
 done
+
+# Module storage policy (part 2/2)
+if [ "$CACHE" != 'shared' ]; then
+    storage_reset
+fi
 
 rm -f "$UCOOKIE" "$URESULT"
 

@@ -22,7 +22,10 @@
 set -o pipefail
 
 # Each time an API is updated, this value will be increased
-declare -r PLOWSHARE_API_VERSION=0
+declare -r PLOWSHARE_API_VERSION=1
+
+# User configuration directory (contains plowshare.conf, exec/, storage/)
+declare -r PLOWSHARE_CONFDIR="$HOME/.config/plowshare"
 
 # Global error codes
 # 0 means success or link alive
@@ -52,11 +55,10 @@ declare -r ERR_FATAL_MULTIPLE=100         # 100 + (n) with n = first error code 
 
 # Global variables used (defined in plow* scripts):
 #   - VERBOSE          Verbosity level (0=none, 1=error, 2=notice, 3=debug, 4=report)
-#   - LIBDIR           Absolute path to plowshare's libdir
-#   - INTERFACE        Network interface (used by curl)
-#   - MAX_LIMIT_RATE   Network maximum speed (used by curl)
-#   - MIN_LIMIT_RATE   Network minimum speed (used by curl)
-#   - NO_CURLRC        Do not read of use curlrc config
+#   - INTERFACE        (curl) Network interface
+#   - MAX_LIMIT_RATE   (curl) Network maximum speed
+#   - MIN_LIMIT_RATE   (curl) Network minimum speed
+#   - NO_CURLRC        (curl) Do not read of use curlrc config
 #   - CAPTCHA_METHOD   User-specified captcha method
 #   - CAPTCHA_ANTIGATE Antigate.com captcha key
 #   - CAPTCHA_9KWEU    9kw.eu captcha key
@@ -64,11 +66,10 @@ declare -r ERR_FATAL_MULTIPLE=100         # 100 + (n) with n = first error code 
 #   - CAPTCHA_COIN     captchacoin.com captcha key
 #   - CAPTCHA_DEATHBY  DeathByCaptcha account
 #   - CAPTCHA_PROGRAM  External solver program/script
-#   - MODULE           Module name (don't include .sh)
+#   - MODULE           Module name (don't include .sh), used by storage API
+#   - TMPDIR           Temporary directory
+#   - CACHE            Storage API policy: none, session (default or empty), shared.
 # Note: captchas are handled in plowdown, plowup and plowdel.
-#
-# Global variables defined here:
-#   - PS_TIMEOUT       (plowdown, plowup) Timeout (in seconds) for one item
 #
 # Logs are sent to stderr stream.
 # Policies:
@@ -76,12 +77,15 @@ declare -r ERR_FATAL_MULTIPLE=100         # 100 + (n) with n = first error code 
 # - notice: core messages (wait, timeout, retries), lastest curl call (plowdown, plowup)
 # - debug: all core/modules messages, curl calls
 # - report: debug plus curl content (html pages, cookies)
+#
+# Global variables defined here (FIXME later):
+#   - PS_TIMEOUT       (plowdown, plowup) Timeout (in seconds) for one item
 
 # log_report for a file
 # $1: filename
 logcat_report() {
     if test -s "$1"; then
-        test $VERBOSE -ge 4 && \
+        test $VERBOSE -lt 4 || \
             stderr "$(sed -e 's/^/rep:/' "$1")"
     fi
     return 0
@@ -89,24 +93,20 @@ logcat_report() {
 
 # This should not be called within modules
 log_report() {
-    test $VERBOSE -ge 4 && stderr "rep: $@"
-    return 0
+    test $VERBOSE -lt 4 || stderr "rep: $@"
 }
 
 log_debug() {
-    test $VERBOSE -ge 3 && stderr "dbg: $@"
-    return 0
+    test $VERBOSE -lt 3 || stderr "dbg: $@"
 }
 
 # This should not be called within modules
 log_notice() {
-    test $VERBOSE -ge 2 && stderr "$@"
-    return 0
+    test $VERBOSE -lt 2 || stderr "$@"
 }
 
 log_error() {
-    test $VERBOSE -ge 1 && stderr "$@"
-    return 0
+    test $VERBOSE -lt 1 || stderr "$@"
 }
 
 ## ----------------------------------------------------------------------------
@@ -1092,7 +1092,7 @@ get_filesize() {
 # $1: (optional) filename suffix
 create_tempfile() {
     local -r SUFFIX=$1
-    local FILE="${TMPDIR:-/tmp}/$(basename_file "$0").$$.$RANDOM$SUFFIX"
+    local FILE="$TMPDIR/$(basename_file "$0").$$.$RANDOM$SUFFIX"
     :> "$FILE" || return $ERR_SYSTEM
     echo "$FILE"
 }
@@ -1398,9 +1398,8 @@ captcha_process() {
             fi
 
             if check_exec identify; then
-                local DIMENSION=$(identify -quiet "$FILENAME" | cut -d' ' -f3)
-                local W=${DIMENSION%x*}
-                local H=${DIMENSION#*x}
+                local -i W H
+                read -r W H < <(identify -quiet -format '%w %h' "$FILENAME")
                 [ "$W" -lt "$MAX_OUTPUT_WIDTH" ] && MAX_OUTPUT_WIDTH=$W
                 [ "$H" -lt "$MAX_OUTPUT_HEIGHT" ] && MAX_OUTPUT_HEIGHT=$H
             fi
@@ -2383,6 +2382,136 @@ translate_size() {
     esac
 }
 
+# Add/Update item (key-value pair) to local storage module file.
+#
+# $1: Key name. Will be 'default' for empty string.
+# $2: (optional) String value to save. Don't mention this to delete key.
+# $?: 0 for success (item saved correctly), error otherwise
+storage_set() {
+    local -r KEY=${1:-default}
+    local CONFIG
+    local -A OBJ
+
+    if [ -z "$MODULE" ]; then
+        log_error "$FUNCNAME: \$MODULE is undefined, abort."
+        return $ERR_NOMODULE
+    fi
+
+    if [ "$CACHE" != 'shared' ]; then
+        CONFIG="$TMPDIR/$(basename_file "$0").$$.${MODULE}.txt"
+    else
+        CONFIG="$PLOWSHARE_CONFDIR/storage"
+
+        [ -d "$CONFIG" ] || mkdir --parents "$CONFIG"
+
+        if [ ! -w "$CONFIG" ]; then
+          log_error "$FUNCNAME: write permissions expected \`$CONFIG'"
+          return $ERR_SYSTEM
+        fi
+
+        CONFIG="$CONFIG/${MODULE}.txt"
+    fi
+
+    if [ -f "$CONFIG" ]; then
+        if [ ! -w "$CONFIG" ]; then
+            log_error "$FUNCNAME: write permissions expected \`$CONFIG'"
+            return $ERR_SYSTEM
+        fi
+        source "$CONFIG"
+    fi
+
+    # Unset parameter and empty string are different
+    if test "${2+isset}"; then
+        OBJ[$KEY]=$2
+    else
+        unset -v OBJ[$KEY]
+    fi
+
+    declare -p OBJ >"$CONFIG"
+    log_debug "$FUNCNAME: \`$KEY' set for module \`$MODULE'"
+}
+
+# Get item value from local storage module file.
+#
+# $1: (optional) Key name. Will be 'default' if unset
+# $?: 0 for success, error otherwise
+# stdout: value read from file
+storage_get() {
+    local -r KEY=${1:-default}
+    local CONFIG
+    local -A OBJ
+
+    if [ -z "$MODULE" ]; then
+        log_error "$FUNCNAME: \$MODULE is undefined, abort."
+        return $ERR_NOMODULE
+    fi
+
+    if [ "$CACHE" != 'shared' ]; then
+        CONFIG="$TMPDIR/$(basename_file "$0").$$.${MODULE}.txt"
+    else
+        CONFIG="$PLOWSHARE_CONFDIR/storage"
+        [ -d "$CONFIG" ] || return $ERR_FATAL
+        CONFIG="$CONFIG/${MODULE}.txt"
+    fi
+
+    if [ -f "$CONFIG" ]; then
+        if [ ! -r "$CONFIG" ]; then
+            log_error "$FUNCNAME: read permissions expected \`$CONFIG'"
+            return $ERR_SYSTEM
+        fi
+
+        source "$CONFIG"
+
+        if test "${OBJ[$KEY]+isset}"; then
+            echo "${OBJ[$KEY]}"
+            return 0
+        fi
+    fi
+
+    return $ERR_FATAL
+}
+
+# Clear local storage module file, all entries will be lost.
+storage_reset() {
+    local CONFIG
+
+    if [ -z "$MODULE" ]; then
+        log_error "$FUNCNAME: \$MODULE is undefined, abort."
+        return $ERR_NOMODULE
+    fi
+
+    if [ "$CACHE" != 'shared' ]; then
+        CONFIG="$TMPDIR/$(basename_file "$0").$$.${MODULE}.txt"
+    else
+        CONFIG="$PLOWSHARE_CONFDIR/storage"
+        [ -d "$CONFIG" ] || return $ERR_FATAL
+        CONFIG="$CONFIG/${MODULE}.txt"
+    fi
+
+    if [ -f "$CONFIG" ]; then
+        rm -f "$CONFIG"
+        log_debug "$FUNCNAME: delete file for module \`$MODULE'"
+    fi
+}
+
+# Save current date (Epoch) in local storage module file.
+# $?: 0 for success, error otherwise
+storage_timestamp_set() {
+  storage_set '__date__' "$(date -u +%s)"
+}
+
+# Get time difference from date save in local storage module file.
+# $1: (optional) Touch flag. If defined, update saved timestamp.
+# $?: 0 for success, error otherwise
+# stdout: age value (in seconds)
+storage_timestamp_diff() {
+  local CUR DATE
+  DATE=$(storage_get '__date__') || return
+  CUR=$(date -u +%s)
+  [ -z "$1" ] || storage_set '__date__' "$CUR"
+  echo "$((CUR - DATE))"
+}
+
 ## ----------------------------------------------------------------------------
 
 ##
@@ -2400,11 +2529,18 @@ strip() {
 # Remove all temporal files created by the script
 # (with create_tempfile)
 remove_tempfiles() {
-    rm -f "${TMPDIR:-/tmp}/$(basename_file $0).$$".*
+    rm -f "$TMPDIR/$(basename_file $0).$$".*
 }
 
 # Exit callback (task: clean temporal files)
 set_exit_trap() {
+    if [ -z "$TMPDIR" ]; then
+        log_error 'Error: TMPDIR is not defined.'
+        return $ERR_SYSTEM
+    elif [ ! -d "$TMPDIR" ]; then
+        log_error 'Error: TMPDIR is not a directory.'
+        return $ERR_SYSTEM
+    fi
     trap remove_tempfiles EXIT
 }
 
@@ -2424,7 +2560,7 @@ timeout_init() {
 
 # Show help info for options
 #
-# $1: options
+# $1: options (one per line)
 # $2: indent string
 print_options() {
     local -r INDENT=${2:-'  '}
@@ -2455,41 +2591,44 @@ print_options() {
 
 # Show usage info for modules
 #
-# $1: module name list (one per line)
+# $1: module list (array name)
 # $2: option family name (string, example:UPLOAD)
 print_module_options() {
-    while read -r; do
-        local OPTIONS=$(get_module_options "$REPLY" "$2")
+    local ELT OPTIONS
+    for ELT in "${!1}"; do
+        OPTIONS=$(get_module_options "$ELT" "$2")
         if test "$OPTIONS"; then
             echo
-            echo "Options for module <$REPLY>:"
+            echo "Options for module <$ELT>:"
             print_options "$OPTIONS"
         fi
-    done <<< "$1"
+    done
 }
 
 # Get all modules options with specified family name
 #
-# $1: module name list (one per line)
+# $1: module list (array name)
 # $2: option family name (string, example:UPLOAD)
 get_all_modules_options() {
-    while read -r; do
-        get_module_options "$REPLY" "$2"
-    done <<< "$1"
+    local ELT
+    for ELT in "${!1}"; do
+        get_module_options "$ELT" "$2"
+    done
 }
 
 # Get module name from URL link
 #
 # $1: url
-# $2: module name list (one per line)
+# $2: module list (array name)
 get_module() {
-    while read -r; do
-        local -u VAR="MODULE_${REPLY}_REGEXP_URL"
+    local ELT
+    for ELT in "${!2}"; do
+        local -u VAR="MODULE_${ELT}_REGEXP_URL"
         if match "${!VAR}" "$1"; then
-            echo "$REPLY"
+            echo "$ELT"
             return 0
         fi
-    done <<< "$2"
+    done
     return $ERR_NOMODULE
 }
 
@@ -2501,7 +2640,7 @@ process_core_options() {
     local -r OPTIONS=$(strip_and_drop_empty_lines "$2")
     shift 2
 
-    VERBOSE=2 PATH="$PATH:$HOME/.config/plowshare/exec" process_options \
+    VERBOSE=2 PATH="$PATH:$PLOWSHARE_CONFDIR/exec" process_options \
         "$NAME" "$OPTIONS" -1 "$@"
 }
 
@@ -2526,25 +2665,25 @@ process_module_options() {
 }
 
 # Get module list according to capability
-# Note1: use global variable LIBDIR
-# Note2: VERBOSE (log_debug) not initialised yet
+# Note1: VERBOSE (log_debug) not initialised yet
 #
-# $1: feature to grep (must not contain '|' char)
-# $2 (optional): feature to subtract (must not contain '|' char)
+# $1: absolute path to plowshare's libdir
+# $2: feature to grep (must not contain '|' char)
+# $3 (optional): feature to subtract (must not contain '|' char)
 # stdout: return module list (one name per line)
 get_all_modules_list() {
-    local -r CONFIG="$LIBDIR/modules/config"
+    local -r CONFIG="$1/modules/config"
 
     if [ ! -f "$CONFIG" ]; then
         stderr "can't find config file"
         return $ERR_SYSTEM
     fi
 
-    if test "$2"; then
-        sed -ne "/^[^#]/{/|[[:space:]]*$1/{/|[[:space:]]*$2/!s/^\([^[:space:]|]*\).*/\1/p}}" \
+    if test "$3"; then
+        sed -ne "/^[^#]/{/|[[:space:]]*$2/{/|[[:space:]]*$3/!s/^\([^[:space:]|]*\).*/\1/p}}" \
             "$CONFIG"
     else
-        sed -ne "/^[^#]/{/|[[:space:]]*$1/s/^\([^[:space:]|]*\).*/\1/p}" \
+        sed -ne "/^[^#]/{/|[[:space:]]*$2/s/^\([^[:space:]|]*\).*/\1/p}" \
             "$CONFIG"
     fi
 }
@@ -2557,7 +2696,7 @@ process_configfile_options() {
     local CONFIG OPTIONS SECTION NAME VALUE OPTION
 
     if [ -z "$3" ]; then
-        CONFIG="$HOME/.config/plowshare/plowshare.conf"
+        CONFIG="$PLOWSHARE_CONFDIR/plowshare.conf"
         test -f "$CONFIG" || CONFIG='/etc/plowshare.conf'
         test -f "$CONFIG" || return 0
     else
@@ -2603,7 +2742,7 @@ process_configfile_module_options() {
     local CONFIG OPTIONS SECTION OPTION LINE VALUE
 
     if [ -z "$4" ]; then
-        CONFIG="$HOME/.config/plowshare/plowshare.conf"
+        CONFIG="$PLOWSHARE_CONFDIR/plowshare.conf"
         if [ -f "$CONFIG" ]; then
             if [ -O "$CONFIG" ]; then
                 # First 10 characters: access rights (human readable form)
@@ -2660,7 +2799,9 @@ process_configfile_module_options() {
 }
 
 # Get system information.
+# $1: absolute path to plowshare's libdir
 log_report_info() {
+    local -r LIBDIR1=$1
     local G GIT_DIR LIBDIR2
 
     if test $VERBOSE -ge 4; then
@@ -2677,11 +2818,11 @@ log_report_info() {
         fi
         check_exec 'gsed' && G=g
         log_report "[sed ] $(${G}sed --version | sed -ne '/version/p')"
-        log_report "[lib ] '$LIBDIR'"
+        log_report "[lib ] '$LIBDIR1'"
 
         # Having several installations is usually a source of issues
         for LIBDIR2 in '/usr/share/plowshare4' '/usr/local/share/plowshare4'; do
-            if [ "$LIBDIR2" != "$LIBDIR" -a -f "$LIBDIR2/core.sh" ]; then
+            if [ "$LIBDIR2" != "$LIBDIR1" -a -f "$LIBDIR2/core.sh" ]; then
                 log_report "[lib2] '$LIBDIR2'"
             fi
         done
@@ -2790,6 +2931,7 @@ handle_tokens() {
 
 stderr() {
     echo "$@" >&2
+    return 0
 }
 
 # This function shell-quotes the argument ($1)
@@ -2958,7 +3100,7 @@ grep_block_by_order() {
 
 # Check argument type
 # $1: program name (used for error reporting only)
-# $2: format (a, D, e, f, F, l, n, N, r, R, s, S, t, V)
+# $2: format (a, c, C, D, e, f, F, l, n, N, r, R, s, S, t)
 # $3: option value (string)
 # $4: option name (used for error reporting only)
 # $?: return 0 for success
@@ -3042,13 +3184,24 @@ check_argument_type() {
     # l: List (comma-separated values), non empty
     elif [[ $TYPE = 'l' && $VAL = '' ]]; then
         log_error "$NAME ($OPT): comma-separated list expected"
-    # V: special type for verbosity (values={0,1,2,3,4})
-    elif [[ $TYPE = 'V' && $VAL != [0-4] ]]; then
-       log_error "$NAME: wrong verbose level \`$VAL'. Must be 0, 1, 2, 3 or 4."
+    # c: choice list
+    # C: choice list with empty string allowed. Long options only advised.
+    elif [[ $TYPE = [cC]* ]]; then
+        if [[ $TYPE = C* && $VAL = '' ]]; then
+            RET=0
+        else
+            local -a ITEMS
+            IFS='|' read -r -a ITEMS <<< "${TYPE:2}"
+            if find_in_array ITEMS[@] "$VAL"; then
+                RET=0
+            else
+                log_error "$NAME ($OPT): wrong value '$VAL'. Possible values are: ${ITEMS[@]}."
+            fi
+        fi
 
     elif [[ $TYPE = [lsSt] ]]; then
         RET=0
-    elif [[ $TYPE = [aenNrRV] ]]; then
+    elif [[ $TYPE = [aenNrR] ]]; then
         if [ "${VAL:0:1}" = '-' ]; then
             log_error "$NAME ($OPT): missing parameter"
         else

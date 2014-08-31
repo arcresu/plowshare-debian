@@ -1,6 +1,4 @@
-#!/bin/bash
-#
-# rghost.net module
+# Plowshare rghost.net module
 # Copyright (c) 2013 Plowshare team
 #
 # This file is part of Plowshare.
@@ -193,7 +191,7 @@ rghost_upload() {
 rghost_probe() {
     local -r URL=$2
     local -r REQ_IN=$3
-    local PAGE LOCATION FILE_SIZE REQ_OUT HASH
+    local PAGE LOCATION FILE_SIZE REQ_OUT
 
     PAGE=$(curl "$URL") || return
 
@@ -220,8 +218,12 @@ rghost_probe() {
 
     # Provides both MD5 & SHA1
     if [[ $REQ_IN = *h* ]]; then
-        HASH=$(parse '<dt>SHA1</dt>' '<dd>\([^<]\+\)' 1 <<< "$PAGE") && \
-            echo "$HASH" && REQ_OUT="${REQ_OUT}h"
+        parse '<dt>SHA1</dt>' '<dd>\([^<]\+\)' 1 <<< "$PAGE" && \
+            REQ_OUT="${REQ_OUT}h"
+    fi
+
+    if [[ $REQ_IN = *t* ]]; then
+        parse_attr '<time' 'datetime' <<< "$PAGE" && REQ_OUT="${REQ_OUT}t"
     fi
 
     echo $REQ_OUT
