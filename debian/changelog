@@ -1,3 +1,9 @@
+plowshare4 (1.0.5-1ubuntu2) trusty; urgency=low
+
+  * Remove old hosts from the package description.
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 01 Sep 2014 10:21:11 +1000
+
 plowshare4 (1.0.5-1ubuntu1) trusty; urgency=medium
 
   * New upstream release.
