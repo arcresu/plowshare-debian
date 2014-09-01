@@ -1,3 +1,9 @@
+plowshare4 (1.0.5-1ubuntu3) trusty; urgency=low
+
+  * Update package relationships to mention supported image viewers.
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 01 Sep 2014 13:24:55 +1000
+
 plowshare4 (1.0.5-1ubuntu2) trusty; urgency=low
 
   * Remove old hosts from the package description.
