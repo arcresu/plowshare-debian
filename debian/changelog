@@ -1,3 +1,11 @@
+plowshare4 (1.0.5-2~gite53df06-0ppa1) trusty; urgency=medium
+
+  [ Matthieu Crapet ]
+  * [b8417b8] thefilebay.com: new module
+  * [e53df06] turbobit (upload): use official API
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 01 Sep 2014 11:25:29 +1000
+
 plowshare4 (1.0.5-0ppa1) trusty; urgency=medium
 
   [ Matthieu Crapet ]
