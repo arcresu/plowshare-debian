@@ -11,10 +11,8 @@ Vcs-Browser: https://github.com/arcresu/plowshare4-debian
 Package: plowshare4
 Architecture: all
 Depends: ${misc:Depends}, bash (>=4.1), curl (>=7.24), recode | libhtml-parser-perl, rhino
-Recommends: qiv | feh | imagemagick
-Suggests: aview | caca-utils
-Replaces: plowshare
-Conflicts: plowshare3
+Recommends: qiv | feh | sxiv | imagemagick
+Suggests: aview | caca-utils, fbi
 Description: Download and upload files from file sharing websites
  Plowshare is a command-line tool for managing files on popular file sharing
  websites (a.k.a. file hosting providers or One-Click hosters). Plowshare
