@@ -1,3 +1,9 @@
+plowshare4 (1.0.5-1ubuntu4) trusty; urgency=low
+
+  * Fix permissions causing lintian errors.
+
+ -- Carl Suster <carl@contraflo.ws>  Thu, 04 Sep 2014 11:52:45 +1000
+
 plowshare4 (1.0.5-1ubuntu3) trusty; urgency=low
 
   * Update package relationships to mention supported image viewers.
