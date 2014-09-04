@@ -1,3 +1,9 @@
+plowshare4 (1.0.5-2~gite53df06-0ppa3) trusty; urgency=low
+
+  * Fix permissions causing lintian error.
+
+ -- Carl Suster <carl@contraflo.ws>  Thu, 04 Sep 2014 11:55:48 +1000
+
 plowshare4 (1.0.5-2~gite53df06-0ppa2) trusty; urgency=low
 
   * Update package relationships to mention supported image viewers.

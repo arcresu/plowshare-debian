@@ -8,7 +8,7 @@
 
 override_dh_fixperms:
 	dh_fixperms
-	find debian/plowshare4/usr/share/ -name '*.sh' | xargs chmod a+x
+	chmod a+x debian/plowshare4/usr/share/plowshare4/core.sh
 
 override_dh_bash-completion:
 	dh_bash-completion
