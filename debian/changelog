@@ -6,6 +6,7 @@ plowshare4 (1.0.5-1) unstable; urgency=medium
   * Drop Conflicts: plowshare3 since it was never in the archive.
   * Add Recommends: sxiv as an alternative X image viewer.
   * Add Suggests: fbi as a framebuffer viewer.
+  * Remove executable permission on module files.
 
  -- Carl Suster <carl@contraflo.ws>  Sun, 31 Aug 2014 18:53:00 +1000
 
