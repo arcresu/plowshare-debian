@@ -1,3 +1,11 @@
+plowshare4 (1.0.5-4~git4600d4f-0ppa1) trusty; urgency=medium
+
+  [ Matthieu Crapet ]
+  * [8c96219] uptobox (download): fix mutiple downloads
+  * [4600d4f] filepup_net (download): fix, website updated
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 08 Sep 2014 12:12:32 +1000
+
 plowshare4 (1.0.5-2~gite53df06-0ppa3) trusty; urgency=low
 
   * Fix permissions causing lintian error.
