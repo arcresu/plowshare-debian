@@ -1,3 +1,11 @@
+plowshare4 (1.0.5-6~git55f2bc0-0ppa1) trusty; urgency=medium
+
+  [ Matthieu Crapet ]
+  * [9168197] filepup_net (download): quick fix
+  * [55f2bc0] filepup_net (download): quick fix
+
+ -- Carl Suster <carl@contraflo.ws>  Thu, 11 Sep 2014 15:51:54 +1000
+
 plowshare4 (1.0.5-4~git4600d4f-0ppa1) trusty; urgency=medium
 
   [ Matthieu Crapet ]
