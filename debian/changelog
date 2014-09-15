@@ -1,3 +1,10 @@
+plowshare4 (1.0.5-7~git27d88a4-0ppa1) trusty; urgency=medium
+
+  [ Jan ]
+  * [27d88a4] shareonline_biz (login, download): check premium account errors
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 15 Sep 2014 12:15:24 +1000
+
 plowshare4 (1.0.5-6~git55f2bc0-0ppa1) trusty; urgency=medium
 
   [ Matthieu Crapet ]
