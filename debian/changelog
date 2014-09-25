@@ -1,3 +1,18 @@
+plowshare4 (1.0.5-11~git117dd81-0ppa1) trusty; urgency=medium
+
+  * Debian packaging changes:
+    - Update Standards-Version to 3.9.6
+    - Add branch name to Vcs-Git field
+    - Use safer command to derive version string
+
+  [ Matthieu Crapet ]
+  * [7a7838d] firedrive: deal correctly with direct links
+  * [eb9ecbc] plowdown: clean all files when --cache=session
+  * [7205557] zippyshare (download): upstream updated
+  * [117dd81] uploading.com: fix, upstream modified
+
+ -- Carl Suster <carl@contraflo.ws>  Thu, 25 Sep 2014 10:52:19 +1000
+
 plowshare4 (1.0.5-7~git27d88a4-0ppa1) trusty; urgency=medium
 
   [ Jan ]
