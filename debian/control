@@ -2,7 +2,7 @@ Source: plowshare4
 Section: web
 Priority: optional
 Maintainer: Carl Suster <carl@contraflo.ws>
-Build-Depends: debhelper (>= 9), bash-completion
+Build-Depends: bash-completion, debhelper (>= 9)
 Standards-Version: 3.9.6
 Homepage: http://code.google.com/p/plowshare/
 Vcs-Git: git://github.com/arcresu/plowshare4-debian.git -b ubuntu/trusty/snapshot
@@ -10,7 +10,11 @@ Vcs-Browser: https://github.com/arcresu/plowshare4-debian
 
 Package: plowshare4
 Architecture: all
-Depends: ${misc:Depends}, bash (>=4.1), curl (>=7.24), recode | libhtml-parser-perl, rhino
+Depends: bash (>=4.1),
+         curl (>=7.24),
+         recode | libhtml-parser-perl,
+         rhino,
+         ${misc:Depends}
 Recommends: qiv | feh | sxiv | imagemagick
 Suggests: aview | caca-utils, fbi
 Description: Download and upload files from file sharing websites
