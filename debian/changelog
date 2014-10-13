@@ -1,3 +1,20 @@
+plowshare4 (1.0.5-18~git62f9fad-0ppa1) trusty; urgency=medium
+
+  [ Matthieu Crapet ]
+  * [8da8752] zippyshare (download): upstream updated
+  * [b07d2ad] 1fichier (download): handle correctly premium download
+
+  [ Jan ]
+  * [ad67dbb] letitbit (upload): Rewrite to use the (new) panel interface
+  * [eef906f] letitbit (upload): add support for folders
+
+  [ Matthieu Crapet ]
+  * [37644ab] thefilebay: minor, missing MODULE_THEFILEBAY_PROBE_OPTIONS
+  * [5194002] 180upload: minor, missing FILE_SIZE declaration
+  * [62f9fad] filecore.co.nz: new module
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 13 Oct 2014 11:29:48 +1100
+
 plowshare4 (1.0.5-11~git117dd81-0ppa1) trusty; urgency=medium
 
   * Debian packaging changes:
