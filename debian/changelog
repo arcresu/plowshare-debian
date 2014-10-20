@@ -1,3 +1,13 @@
+plowshare4 (1.0.5-22~git2fade50-0ppa1) trusty; urgency=medium
+
+  [ Matthieu Crapet ]
+  * [d051d7c] Bash 4.2 or better support \uNNNN and \UNNNNNNNN escape sequences. It has no effect for Bash 4.1 users.
+  * [83848d9] plowdown (pretty_check): avoid a subshell
+  * [32cd98f] 1fichier (download): direct download is also possible for anonymous download
+  * [2fade50] filecloud: API url updated
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 20 Oct 2014 12:52:41 +1100
+
 plowshare4 (1.0.5-18~git62f9fad-0ppa1) trusty; urgency=medium
 
   [ Matthieu Crapet ]
