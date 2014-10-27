@@ -1,3 +1,13 @@
+plowshare4 (1.0.6-1ubuntu1) trusty; urgency=medium
+
+  * New upstream release.
+  * Bump Standards-Version to 3.9.6, no changes.
+  * Point Vcs-Git field to the correct branch.
+  * Improve the derivation of the version string from git.
+  * Update list of supported modules.
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 27 Oct 2014 21:37:31 +1100
+
 plowshare4 (1.0.5-1ubuntu4) trusty; urgency=low
 
   * Fix permissions causing lintian errors.
