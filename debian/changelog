@@ -1,3 +1,19 @@
+plowshare4 (1.0.6-4~git9e17736-0ppa1) trusty; urgency=medium
+
+  [ Matthieu Crapet ]
+  * [f763332] zippyshare (download): upstream updated
+  * [c456855] plowdown: ignore -O/-J switches in
+    MODULE_xxx_DOWNLOAD_FINAL_LINK_NEEDS_EXTRA
+  * [ce54d54] zalil_ru: drop module
+  * [f61f529] plowdown, plowup, plowprobe: fix --no-curlrc option
+
+  [ Jan ]
+  * [bf0b1fb] uploaded_net (download, probe): detect folder links
+  * [dc2a1d1] keep2share (download, probe): fix detection of deleted files
+  * [9e17736] mediafire: consider HTTPS links
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 27 Oct 2014 21:30:02 +1100
+
 plowshare4 (1.0.5-22~git2fade50-0ppa1) trusty; urgency=medium
 
   [ Matthieu Crapet ]
