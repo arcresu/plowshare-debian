@@ -535,8 +535,14 @@ download() {
             if ANAME=$(module_config_need_extra "$MODULE"); then
                 local OPTION
                 for OPTION in "${!ANAME}"; do
-                    log_debug "adding extra curl options: '$OPTION'"
-                    CURL_ARGS+=("$OPTION")
+                    if [[ $OPTION = '-J' || $OPTION = '--remote-header-name' ]]; then
+                        log_debug "ignoring extra curl option: '$OPTION'"
+                    elif [[ $OPTION = '-O' || $OPTION = '--remote-name' ]]; then
+                        log_debug "ignoring extra curl option: '$OPTION'"
+                    else
+                        log_debug "adding extra curl option: '$OPTION'"
+                        CURL_ARGS+=("$OPTION")
+                    fi
                 done
             fi
 
@@ -671,12 +677,12 @@ pretty_check() {
 # $3: format string
 # Note: Don't chmod cookie file (keep strict permissions)
 pretty_print() {
-    local -r N=$(printf %04d $1)
     local -ar A=("${!2}")
     local -r CR=$'\n'
     local FMT=$3
-    local COOKIE_FILE
+    local N COOKIE_FILE
 
+    printf -v N %04d $(($1))
     test "${FMT#*%%}" != "$FMT" && FMT=$(replace_all '%%' "%raw" <<< "$FMT")
 
     # FIXME: ${A[2]} could contain %? patterns
@@ -859,6 +865,10 @@ test "$UMASK" && umask 0066
 # sucessive downloads.
 PREVIOUS_HOST=none
 
+# Only used when CACHE policy is session (default).
+# Use an associative array to not have duplicated modules.
+declare -A CACHED_MODULES
+
 # Count downloads (1-based index)
 declare -i INDEX=1
 
@@ -962,6 +972,8 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
             # Module storage policy (part 1/2)
             if [ "$CACHE" = 'none' ]; then
                 storage_reset
+            elif [ "$CACHE" != 'shared' ]; then
+                [[ ${CACHED_MODULES["$MODULE"]} ]] || CACHED_MODULES["$MODULE"]=1
             fi
 
             ${MODULE}_vars_set
@@ -985,7 +997,7 @@ done
 
 # Module storage policy (part 2/2)
 if [ "$CACHE" != 'shared' ]; then
-    storage_reset
+    for MODULE in "${!CACHED_MODULES[@]}"; do storage_reset; done
 fi
 
 # Restore umask
