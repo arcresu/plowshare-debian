@@ -2,7 +2,7 @@ Source: plowshare4
 Section: web
 Priority: optional
 Maintainer: Carl Suster <carl@contraflo.ws>
-Build-Depends: debhelper (>= 9), bash-completion
+Build-Depends: bash-completion, debhelper (>= 9)
 Standards-Version: 3.9.6
 Homepage: http://code.google.com/p/plowshare/
 Vcs-Git: git://github.com/arcresu/plowshare4-debian.git -b debian/unstable
@@ -10,7 +10,11 @@ Vcs-Browser: https://github.com/arcresu/plowshare4-debian
 
 Package: plowshare4
 Architecture: all
-Depends: ${misc:Depends}, bash (>=4.1), curl (>=7.24), recode | libhtml-parser-perl, rhino
+Depends: bash (>=4.1),
+         curl (>=7.24),
+         recode | libhtml-parser-perl,
+         rhino,
+         ${misc:Depends}
 Recommends: qiv | feh | sxiv | imagemagick
 Suggests: aview | caca-utils, fbi
 Description: Download and upload files from file sharing websites
@@ -19,17 +23,22 @@ Description: Download and upload files from file sharing websites
  has bash scripts to download or upload files and manage remote folders and
  link deletion.
  .
- Supported sites include: 115.com, 180upload.com, 1fichier, 2shared, 4shared,
+ Supported sites include:
+ 115.com, 180upload.com, 1fichier, 2shared, 4shared,
  4share.vn, anonfiles, bayfiles, bayimg, billion uploads,
- bitshare, chomikuj, cramit.in, crocko.com, data.hu, dataport.cz, depositfiles,
+ bitshare, chomikuj, cramit.in, crocko.com,
+ data.hu, dataport.cz, depositfiles,
  directmirror, divshare, dl.free.fr, embed upload, euroshare.eu, exoshare,
- filebin.ca, filecloud.io, filefactory, filemonkey, fileover.net,
+ filebin.ca, filecloud.io, filecore.co.nz
+ filefactory, filemonkey, fileover.net,
  fileparadox, filepost, filepup.net, filer.net, firedrive, flashx.tv,
  freakshare, fshare.vn, gamefront, ge.tt, gfile.ru, go4up, hdstream.to,
  hipfile, jheberg, keep2share, letitbit, mediafire, megashares, mirrorcreator,
- mirrorupload, multiupload, multiup.org, myvdrive, nakido, netkups, netload.in,
+ mirrorupload, multiupload, multiup.org, myvdrive,
+ nakido, netkups, netload.in,
  nowdownload.co, oboom, pastebin, promptfile, rapidgator, rapidshare, rghost,
  ryushare, sendspace, sharebeast, share-online.biz, sockshare, solidfiles,
- tempsend, turbobit.net, ultramegabit.com uploadable.ch, uploaded.net,
- uploadhero, uploading.com, upstore, uptobox, zalaa, zalil.ru, ziddu,
+ tempsend, thefilebay, turbobit.net, ultramegabit.com,
+ uploadable.ch, uploaded.net,
+ uploadhero, uploading.com, upstore, uptobox, zalaa, ziddu,
  zippyshare.
