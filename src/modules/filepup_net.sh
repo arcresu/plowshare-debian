@@ -1,5 +1,5 @@
 # Plowshare filepup.net module
-# Copyright (c) 2013 Plowshare team
+# Copyright (c) 2013-2014 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -38,9 +38,9 @@ filepup_net_login() {
     local -r BASE_URL=$3
     local LOGIN_DATA PAGE ERR TYPE NAME
 
-    LOGIN_DATA='user=$USER&pass=$PASSWORD&submit=Login&task=dologin&return=.%2Fmembers%2Fmyfiles.php'
+    LOGIN_DATA='user=$USER&pass=$PASSWORD&submit=Login&task=dologin&return=.%2Fmembers%2Fmyfiles.php&Submit=Sign+In'
     PAGE=$(post_login "$AUTH" "$COOKIE_FILE" "$LOGIN_DATA" \
-        "$BASE_URL/loginaa.php" '-L') || return
+        "$BASE_URL/loginaa.php" -L) || return
 
     if match '<div class="error">' "$PAGE"; then
         ERR=$(echo "$PAGE" | parse_tag 'class="error">' div)
@@ -48,19 +48,20 @@ filepup_net_login() {
         return $ERR_LOGIN_FAILED
     fi
 
-    NAME=$(echo "$PAGE" | parse '>Username:<' '<td>\([^<]\+\)' 1) || return
-    TYPE=$(echo "$PAGE" | parse_quiet '>Account type:<' '<td>\(.*\)</td>' 1)
+    NAME=$(parse 'class=.hue' '=.hue.>\([^<]\+\)</s' <<< "$PAGE") || NAME='?'
+    TYPE=$(parse_tag_quiet 'fa-star.>' b <<< "$PAGE")
 
-    if matchi 'Free' "$TYPE"; then
+    # <span class="hue"> <i class="fa fa-star"></i><b>PRO MEMBER</b></span><br>
+    if matchi 'FREE MEMBER' "$TYPE"; then
         TYPE='free'
-    elif matchi 'Premium' "$TYPE"; then
+    elif matchi 'PRO MEMBER' "$TYPE"; then
         TYPE='premium'
     else
         log_error 'Could not determine account type. Site updated?'
         return $ERR_FATAL
     fi
 
-    log_debug "Successfully logged in as $TYPE member ($NAME)"
+    log_debug "Successfully logged in as $TYPE member (${NAME%\'s})"
     echo "$TYPE"
 }
 
@@ -78,9 +79,9 @@ filepup_net_download() {
     PAGE=$(curl -L -c "$COOKIE_FILE" "$URL") || return
 
     # You have been given the wrong link or the file you have requested has been deleted for a violation or for inactivity.
-    if match 'has been deleted' "$PAGE"; then
-        return $ERR_LINK_DEAD
-    fi
+    #if match 'has been deleted' "$PAGE"; then
+    #    return $ERR_LINK_DEAD
+    #fi
 
     if [ -n "$AUTH" ]; then
         ACCOUNT=$(filepup_net_login "$AUTH" "$COOKIE_FILE" "$BASE_URL") || return
@@ -90,7 +91,9 @@ filepup_net_download() {
     fi
 
     if [ "$ACCOUNT" = 'premium' ]; then
-        URL=$(echo "$PAGE" | parse '=.premium_btn' "location='\([^']\+\)" | uri_encode) || return
+        URL=$(echo "$PAGE" | parse '[[:space:]]PRO USER<' "location='\([^']\+\)" | uri_encode)
+        [ -n "$URL" ] || \
+            URL=$(echo "$PAGE" | parse '<button.*/get/' "location='\([^']\+\)" | uri_encode) || return
 
         HEADERS=$(curl -b "$COOKIE_FILE" -I "$URL") || return
         DIRECT=$(echo "$HEADERS" | grep_http_header_content_type) || return
@@ -102,15 +105,13 @@ filepup_net_download() {
             return 0
         fi
     else
-        URL=$(echo "$PAGE" | parse 'id=.dlbutton' "location='\([^']\+\)" | uri_encode) || return
-
-        FILE_NAME=$(echo "$PAGE" | parse 'filenameid' '<strong>\(.*\)</strong>' 1 | strip_html_comments)
-        FILE_NAME=${FILE_NAME#[[:space:]]}
-        FILE_NAME=${FILE_NAME#[[:space:]]}
-        FILE_NAME=${FILE_NAME%[[:space:]]}
+        URL=$(echo "$PAGE" | parse '[[:space:]]FREE USER<' "location='\([^']\+\)" | uri_encode)
+        [ -n "$URL" ] || \
+            URL=$(echo "$PAGE" | parse '<button.*/get/' "location='\([^']\+\)" | uri_encode) || return
+        FILE_NAME=$(echo "$PAGE" | parse '[[:space:]]text-overflow:' '>\([^<]\+\)</h') || return
 
         WAIT_TIME=$(echo "$PAGE" | parse \
-            '^var time[[:space:]]*=' '=[[:space:]]*\([[:digit:]]\+\)') || return
+            '^[[:space:]]*var time[[:space:]]*=' '=[[:space:]]*\([[:digit:]]\+\)') || return
         wait $((WAIT_TIME))
     fi
 
@@ -122,7 +123,7 @@ filepup_net_download() {
         return $ERR_FATAL
     fi
 
-    FORM_HTML=$(grep_form_by_order "$PAGE" 1) || return
+    FORM_HTML=$(grep_form_by_order "$PAGE" -1) || return
     FILE_URL=$(echo "$FORM_HTML" | parse_form_action) || return
     FORM_TASK=$(echo "$FORM_HTML" | parse_form_input_by_name 'task') || return
 
@@ -132,7 +133,7 @@ filepup_net_download() {
     else
         # We expect HTTP 302 redirection
         PAGE=$(curl -i -b "$COOKIE_FILE" \
-            -d "task=$FORM_TASK" -d 'submit=download' "$URL") || return
+            -d "task=$FORM_TASK" "$URL") || return
 
         if match '<div class="error">' "$PAGE"; then
             ERR=$(echo "$PAGE" | parse_tag 'class="error">' div)
@@ -189,6 +190,10 @@ filepup_net_probe() {
 
     if [[ $REQ_IN = *s* ]]; then
         echo "$PAGE" | parse '\[file_size\]' '=>[[:space:]]*\([[:digit:]]\+\)' && REQ_OUT="${REQ_OUT}s"
+    fi
+
+    if [[ $REQ_IN = *i* ]]; then
+        echo "$ID" && REQ_OUT="${REQ_OUT}i"
     fi
 
     echo $REQ_OUT

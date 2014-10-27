@@ -128,13 +128,13 @@ zippyshare_download() {
 
     case "$CONTENT" in
         'music.song')
-            N=-10
+            N=-8
             ;;
         'image')
-            N=-6
+            N=-1
             ;;
         '')
-            N=-7
+            N=-5
             ;;
         *)
             log_error "Unexpected content ('$CONTENT'), site updated?"
@@ -164,7 +164,7 @@ zippyshare_download() {
 
     # Find the function to call
     # var somefunction = function() {somffunction()};
-    FUNC=$(parse 'var somefunction = ' '{\([^}]\+\)}' <<< "$PAGE") || return
+    FUNC=$(parse_quiet 'var somefunction = ' '{\([^}]\+\)}' <<< "$PAGE")
 
     PART_URL=$(echo "var elts = new Array();
         var document = {
@@ -173,9 +173,33 @@ zippyshare_download() {
             return elts[id];
           }
         };
+
+        var curobj;
+        evt = {
+          originalEvent: 1
+        }
+
+        mouseevent = function(fnt) {
+          fnt.apply(this,[evt]);
+        }
+        attr = function(attributeName, value) {
+          if (attributeName === 'href') {
+            document.getElementById(curobj.substr(1)).href = value;
+          }
+        }
+        \$ = function(obj) {
+          curobj=obj;
+          return {
+            ready: mouseevent,
+            mouseenter: mouseevent,
+            mouseover: mouseevent,
+            attr: attr
+          };
+        }
+
         $JS
         $FUNC;
-        print(elts['dlbutton'].href);" | javascript) || return
+        print(elts['fimage'].href);" | javascript) || return
 
     FILE_URL="$(basename_url "$URL")$PART_URL"
 
@@ -202,7 +226,7 @@ zippyshare_upload() {
     fi
 
     if [ -n "$AUTH" ]; then
-        zippyshare_login "$AUTH" "$COOKIE_FILE" "$BASE_URL" ||Â return
+        zippyshare_login "$AUTH" "$COOKIE_FILE" "$BASE_URL" || return
     fi
 
     PAGE=$(curl -L -b "$COOKIE_FILE" -b 'ziplocale=en' "$BASE_URL") || return
@@ -221,7 +245,7 @@ zippyshare_upload() {
         FORM_DATA_AUTH="-F zipname=$NAME -F ziphash=$HASH"
     fi
 
-    # Important: field order seems checked! zipname/ziphash go before Filedata!
+    # Important: field order seems checked! zipname/ziphash go before Filedata!
     PAGE=$(curl_with_log -F "uploadId=$FORM_UID" \
         $FORM_DATA_AUTH \
         -F "Filedata=@$FILE;filename=$DESTFILE" \

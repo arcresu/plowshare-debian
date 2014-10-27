@@ -24,6 +24,7 @@ euroshare_eu    | download | upload | delete |      | probe |
 exoshare        |          | upload |        | list |       |
 filebin_ca      | download | upload |        |      | probe |
 filecloud       | download | upload |        | list | probe |
+filecore        | download |        |        |      | probe |
 filefactory     | download | upload |        | list | probe |
 filemonkey      |          | upload |        |      |       |
 fileover        | download |        |        |      | probe |
@@ -68,6 +69,7 @@ shareonline_biz | download | upload |        |      | probe |
 sockshare       | download | upload | delete | list | probe |
 solidfiles      | download | upload |        | list | probe |
 tempsend        | download | upload |        |      |       |
+thefilebay      | download | upload |        |      | probe |
 turbobit        | download | upload | delete | list | probe |
 ultramegabit    | download | upload |        |      | probe |
 uploadable_ch   | download | upload | delete | list | probe |
@@ -77,6 +79,5 @@ uploaded_net    | download | upload | delete | list | probe |
 upstore         | download | upload |        |      | probe |
 uptobox         | download | upload |        |      | probe |
 zalaa           | download | upload |        | list | probe |
-zalil_ru        | download | upload |        |      | probe |
 ziddu           | download | upload |        |      | probe |
 zippyshare      | download | upload |        | list | probe |
