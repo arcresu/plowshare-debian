@@ -1,4 +1,4 @@
-plowshare4 (1.0.6-1) unstable; urgency=medium
+plowshare4 (1.0.6-1) experimental; urgency=medium
 
   * New upstream release.
   * Bump Standards-Version to 3.9.6, no changes.
