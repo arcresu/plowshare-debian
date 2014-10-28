@@ -5,6 +5,7 @@ plowshare4 (1.0.6-1) unstable; urgency=medium
   * Point Vcs-Git field to the correct branch.
   * Improve the derivation of the version string from git.
   * Update list of supported modules.
+  * Remove Depends: bash (bash >=4.1 is present and essential in debian).
 
  -- Carl Suster <carl@contraflo.ws>  Mon, 27 Oct 2014 21:52:42 +1100
 
