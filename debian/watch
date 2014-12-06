@@ -1,0 +1,4 @@
+version=3
+
+https://qa.debian.org/cgi-bin/fakeupstream.cgi?upstream=vcs/git/google/plowshare \
+  https://plowshare.googlecode.com/archive/v(\d[\d\.]*).tar.gz
