@@ -10,6 +10,7 @@ plowshare4 (1.0.6-1) experimental; urgency=medium
   * spelling_comments.patch: corrects typos in comments
   * spelling_helpfull_flag.patch: corrects typo in CLI option.
   * utf8.patch: repairs an encoding issue.
+  * Add upstream metadata.
 
  -- Carl Suster <carl@contraflo.ws>  Mon, 27 Oct 2014 21:52:42 +1100
 
