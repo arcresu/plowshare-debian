@@ -1,3 +1,62 @@
+plowshare4 (1.1.0-12~gite7e1617-0ppa1) trusty; urgency=medium
+
+  [ Matthieu Crapet ]
+  * [d5da3f8] thefilebay: fix download & upload (upstream modified)
+
+  [ Jan ]
+  * [01afa4e] letitbit (upload, download): Support for sessions caching
+  * [ae8085d] letitbit: Remove pipes to avoid SIGPIPE issues
+
+  [ Matthieu Crapet ]
+  * [99ac5e2] thefilebay: fix login (upstream modified)
+  * [b36ea75] 1fichier (download): fix filename (upstream modified)
+  * [8d574af] 1fichier (premium download): fix filename (upstream modified)
+  * [d27b4d6] core.sh (match_remote_url): indent fix
+  * [bd7f0f5] 1fichier (probe): handle additional link format
+  * [e2e85e6] core.sh (process_core_options): redefine PATH when required
+  * [7756792] filecore (download): fix
+  * [870c315] filepup_net (download): fix, website updated
+  * [70ecb51] yourvideohost: new module
+  * [b909793] yourvideohost (download): fix js code
+  * [e01c5f8] filecore (download): fix
+  * [5be10be] filepost (probe): fix %s and add %i --printf option
+  * [650c3a3] add some --printf tokens for JSON processing
+  * [0708496] plowlist, plowdel: add --no-curlrc command line option
+
+  [ roadman17 ]
+  * [e8bf6cf] zippyshare (download): fix again!
+
+  [ Matthieu Crapet ]
+  * [8d9557d] Makefile: allow several "make install" for update
+  * [87bd955] plow*: add --curlrc=<config file> command-line option
+
+  [ Jan ]
+  * [2c11786] turbobit (login): fix, upstream changed
+  * [68f8b28] turbobit (upload): add support for folders
+
+  [ Matthieu Crapet ]
+  * [d5a292c] core.sh (captcha_method_translate): cosmetics, fancier error
+    message
+  * [b026fcb] turbobit: premium download fix
+
+  [ roadman17 ]
+  * [01992cf] flashx (download): fix
+
+  [ Matthieu Crapet ]
+  * [ca661ce] core.sh (captcha_process): check for weird $TERM value
+  * [b9c4d9c] 1fichier (upload): fix (ids are now on 10 characters)
+  * [60a2b46] plowdown: add check for --skip-final without --printf
+
+  [ Jan ]
+  * [4e830b6] rapidgator (login): emulate 'grep_form_by_id_quiet'
+
+  [ Matthieu Crapet ]
+  * [603cbf0] plowdown: add check for detecting base urls
+  * [32c0f19] 1fichier (download): fix wrong filename (again)
+  * [e7e1617] plowprobe: add %v and %V --printf tokens
+
+ -- Carl Suster <carl@contraflo.ws>  Mon, 15 Dec 2014 13:27:11 +1100
+
 plowshare4 (1.0.6-4~git9e17736-0ppa1) trusty; urgency=medium
 
   [ Matthieu Crapet ]
