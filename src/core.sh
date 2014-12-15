@@ -59,6 +59,7 @@ declare -r ERR_FATAL_MULTIPLE=100         # 100 + (n) with n = first error code 
 #   - MAX_LIMIT_RATE   (curl) Network maximum speed
 #   - MIN_LIMIT_RATE   (curl) Network minimum speed
 #   - NO_CURLRC        (curl) Do not read of use curlrc config
+#   - EXT_CURLRC       (curl) Alternate curlrc config file
 #   - CAPTCHA_METHOD   User-specified captcha method
 #   - CAPTCHA_ANTIGATE Antigate.com captcha key
 #   - CAPTCHA_9KWEU    9kw.eu captcha key
@@ -135,7 +136,11 @@ curl() {
         find_in_array CURL_ARGS[@] '--max-redirs' || OPTIONS+=(--max-redirs 5)
     fi
 
-    test -z "$NO_CURLRC" || OPTIONS=(-q "${OPTIONS[@]}")
+    if [ -n "$NO_CURLRC" ]; then
+        OPTIONS=(-q "${OPTIONS[@]}")
+    elif [ -n "$EXT_CURLRC" ]; then
+        OPTIONS=(-q --config "$EXT_CURLRC" "${OPTIONS[@]}")
+    fi
 
     # No verbose unless debug level; don't show progress meter for report level too
     if [ "${FUNCNAME[1]}" = 'curl_with_log' ]; then
@@ -375,7 +380,7 @@ match_remote_url() {
 
     shopt -s nocasematch
     while [[ $# -gt 1 ]]; do
-            shift
+        shift
         if [[ $1 =~ ^[[:alpha:]][-.+[:alnum:]]*$ ]]; then
             if [[ $URL =~ ^[[:space:]]*$1:// ]]; then
                 RET=0
@@ -1389,8 +1394,13 @@ captcha_process() {
 
         if [[ "$METHOD_VIEW" != *view-aa* ]]; then
             if check_exec tput; then
-                MAX_OUTPUT_WIDTH=$(tput cols)
-                MAX_OUTPUT_HEIGHT=$(tput lines)
+                local TYPE
+                if [ -z "$TERM" -a "$TERM" != 'dumb' ]; then
+                    log_notice 'Invalid $TERM value. Terminal type forced to vt100.'
+                    TYPE='-Tvt100'
+                fi
+                MAX_OUTPUT_WIDTH=$(tput $TYPE cols)
+                MAX_OUTPUT_HEIGHT=$(tput $TYPE lines)
             else
                 # Try environment variables
                 MAX_OUTPUT_WIDTH=${COLUMNS:-150}
@@ -2640,8 +2650,12 @@ process_core_options() {
     local -r OPTIONS=$(strip_and_drop_empty_lines "$2")
     shift 2
 
-    VERBOSE=2 PATH="$PATH:$PLOWSHARE_CONFDIR/exec" process_options \
-        "$NAME" "$OPTIONS" -1 "$@"
+    if [ -d "$PLOWSHARE_CONFDIR/exec" ]; then
+        VERBOSE=2 PATH="$PLOWSHARE_CONFDIR/exec:$PATH" process_options \
+            "$NAME" "$OPTIONS" -1 "$@"
+    else
+        VERBOSE=2 process_options "$NAME" "$OPTIONS" -1 "$@"
+    fi
 }
 
 # $1: program name (used for error reporting only)
@@ -2883,7 +2897,7 @@ captcha_method_translate() {
             [[ $3 ]] && unset "$3" && eval $3=view-fb,log
             ;;
         *)
-            log_error "Error: unknown captcha method: $1"
+            log_error "Error: unknown captcha method '$1'.${DISPLAY:+ Try with 'x11' for example.}"
             return $ERR_FATAL
             ;;
     esac
@@ -2920,6 +2934,17 @@ handle_tokens() {
     OUT="$S$OUT"
 
     echo -n "${OUT%x}"
+}
+
+# Format a string suitable for JSON (see www.json.org)
+# Escaped characters: / " \
+#
+# $1: string
+# stdout: JSON string
+json_escape() {
+    local S=${1//\\/\\\\}
+    S=${S//\//\\/}
+    echo -n "${S//\"/\\\"}"
 }
 
 ## ----------------------------------------------------------------------------

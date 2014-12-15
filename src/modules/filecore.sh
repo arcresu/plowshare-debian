@@ -74,7 +74,7 @@ filecore_download() {
     fi
 
     # Set-Cookie: fid
-    PAGE=$(curl -v --location --include -c "$COOKIE_FILE" -b "$COOKIE_FILE" -b 'lang=english' "$URL") || return
+    PAGE=$(curl --location --include -c "$COOKIE_FILE" -b "$COOKIE_FILE" -b 'lang=english' "$URL") || return
 
     POST_URL=$(grep_http_header_location_quiet <<< "$PAGE" | last_line)
     if [ -z "$POST_URL" ]; then
@@ -85,8 +85,6 @@ filecore_download() {
 
     # The page you are looking for cannot be found.
     if match '<title>www.filecore.co.nz | 404 - Page Cannot Be Found</title>' "$PAGE"; then
-        return $ERR_LINK_DEAD
-    elif ! match '<title>Download Page</title>' "$PAGE"; then
         return $ERR_LINK_DEAD
     fi
 
@@ -128,7 +126,7 @@ filecore_download() {
         return $ERR_FATAL
     fi
 
-    parse_attr '/download_linker\.' href <<< "$PAGE" || return
+    parse '"Download Link"' "window\.open('\([^']\+\)')" <<< "$PAGE" || return
     parse_tag 'colspan=.2.><b>' b <<< "$PAGE" || return
 }
 

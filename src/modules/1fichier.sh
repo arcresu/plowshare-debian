@@ -59,17 +59,33 @@ MODULE_1FICHIER_PROBE_OPTIONS=""
     #PAGE=$(curl -b "$COOKIE_FILE" -b 'LG=en' 'https://1fichier.com/console/index.pl') || return
 }
 
+# Static function. Proper way to get file information
+# $1: 1fichier url
+# stdout: string (with ; as separator)
+1fichier_checklink() {
+    local S
+    S=$(curl --form-string "links[]=$1" 'https://1fichier.com/check_links.pl') || return
+
+    # Note: Password protected links return
+    # url;;;PRIVATE
+    if match '\(NOT FOUND\|BAD LINK\)$' "$S"; then
+        return $ERR_LINK_DEAD
+    fi
+
+    echo "$S"
+}
+
 # Output a 1fichier file download URL
 # $1: cookie file (account only)
-# $2: 1fichier.tld url
+# $2: 1fichier url
 # stdout: real file download link
 #
 # Note: Consecutive HTTP requests must be delayed (>10s).
 #       Otherwise you'll get the parallel download message.
 1fichier_download() {
     local -r COOKIE_FILE=$1
-    local -r URL=$2
-    local PAGE FILE_URL FILE_NAME
+    local -r URL=$(replace 'http://' 'https://' <<< "$2")
+    local PAGE FILE_URL FILE_NAME WAIT
 
     if [ -n "$AUTH" ]; then
         1fichier_login "$AUTH" "$COOKIE_FILE" 'https://1fichier.com' || return
@@ -78,16 +94,20 @@ MODULE_1FICHIER_PROBE_OPTIONS=""
     FILE_URL=$(curl --head -b "$COOKIE_FILE" "$URL" | \
         grep_http_header_location_quiet)
 
-    PAGE=$(curl -b 'LG=en' "$URL") || return
+    PAGE=$(1fichier_checklink "$URL") || return
+    IFS=';' read -r _ FILE_NAME _ <<< "$PAGE"
+
+    if [ -z "$FILE_NAME" ]; then
+        log_error 'This must be a direct download link with password, filename will be wrong!'
+    fi
 
     if [ -n "$FILE_URL" ]; then
-        FILE_NAME=$(parse_tag '>Filename[[:space:]]*:<' td <<< "$PAGE") || \
-            log_debug "this must be a direct download link, filename will be wrong"
-
         echo "$FILE_URL"
         echo "$FILE_NAME"
         return 0
     fi
+
+    PAGE=$(curl -b 'LG=en' "$URL") || return
 
     # Location: http://www.1fichier.com/?c=SCAN
     if match 'MOVED - TEMPORARY_REDIRECT' "$PAGE"; then
@@ -105,6 +125,12 @@ MODULE_1FICHIER_PROBE_OPTIONS=""
     if match '>Warning ! Without premium status,' "$PAGE" ; then
         log_error 'No parallel download allowed.'
         echo 300
+        return $ERR_LINK_TEMP_UNAVAILABLE
+
+    # Warning ! Without Premium, you must wait between downloads.<br/>You must wait 9 minutes</div>
+    elif match '>Warning ! Without Premium,' "$PAGE"; then
+        WAIT=$(parse '>Warning ! Without' 'You must wait \([[:digit:]]\+\) minute' <<< "$PAGE")
+        echo $((WAIT * 60))
         return $ERR_LINK_TEMP_UNAVAILABLE
 
     # Please wait until the file has been scanned by our anti-virus
@@ -129,8 +155,6 @@ MODULE_1FICHIER_PROBE_OPTIONS=""
         return 0
     fi
 
-    FILE_NAME=$(parse_tag '>Filename[[:space:]]*:<' td <<< "$PAGE")
-
     PAGE=$(curl --include -b "$COOKIE_FILE" -b 'LG=en' -d '' \
         --referer "$URL" "$URL") || return
 
@@ -145,7 +169,7 @@ MODULE_1FICHIER_PROBE_OPTIONS=""
     echo "$FILE_NAME"
 }
 
-# Upload a file to 1fichier.tld
+# Upload a file to 1fichier
 # $1: cookie file
 # $2: input file (with full path)
 # $3: remote filename
@@ -162,10 +186,7 @@ MODULE_1FICHIER_PROBE_OPTIONS=""
         1fichier_login "$AUTH" "$COOKIE_FILE" 'https://1fichier.com' || return
     fi
 
-    # Initial js code:
-    # var text = ''; var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    # for(var i=0; i<5; i++) text += possible.charAt(Math.floor(Math.random() * possible.length)); print(text);
-    S_ID=$(random ll 5)
+    S_ID=$(random ll 10)
 
     # FIXME: See folders later -F 'did=0' /console/get_dirs_for_upload.pl
     RESPONSE=$(curl_with_log -b "$COOKIE_FILE" \
@@ -191,8 +212,8 @@ MODULE_1FICHIER_PROBE_OPTIONS=""
         return $ERR_FATAL
     fi
 
-    echo "http://${DOWNLOAD_ID}.${DOMAIN_STR[$DOMAIN_ID]}"
-    echo "http://www.${DOMAIN_STR[$DOMAIN_ID]}/remove/$DOWNLOAD_ID/$REMOVE_ID"
+    echo "https://${DOMAIN_STR[$DOMAIN_ID]}/?${DOWNLOAD_ID}"
+    echo "https://${DOMAIN_STR[$DOMAIN_ID]}/remove/$DOWNLOAD_ID/$REMOVE_ID"
 }
 
 # Delete a file uploaded to 1fichier
@@ -264,15 +285,11 @@ MODULE_1FICHIER_PROBE_OPTIONS=""
 
     # Try to get a "strict" url
     FID=$(echo "$URL" | parse_quiet . '://\([[:alnum:]]*\)\.')
-    [ -n "$FID" ] && URL="http://$FID.1fichier.com"
-
-    RESPONSE=$(curl --form-string "links[]=$URL" \
-        'https://www.1fichier.com/check_links.pl') || return
-
-    # Note: Password protected links return NOT FOUND
-    if match '\(NOT FOUND\|BAD LINK\)$' "$RESPONSE"; then
-        return $ERR_LINK_DEAD
+    if [ -n "$FID" ] && [ "$FID" != '1fichier' ]; then
+        URL="https://1fichier.com/?$FID"
     fi
+
+    RESPONSE=$(1fichier_checklink "$URL") || return
 
     # url;filename;filesize
     IFS=';' read -r URL FILE_NAME FILE_SIZE <<< "$RESPONSE"
@@ -280,13 +297,27 @@ MODULE_1FICHIER_PROBE_OPTIONS=""
     REQ_OUT=c
 
     if [[ $REQ_IN = *f* ]]; then
-        echo "$FILE_NAME"
-        REQ_OUT="${REQ_OUT}f"
+        if [[ $FILE_NALE ]]; then
+            echo "$FILE_NAME"
+            REQ_OUT="${REQ_OUT}f"
+        else
+            log_debug 'empty filename: file must be private or password protected'
+        fi
+    fi
+
+    if [[ $REQ_IN = *i* ]]; then
+        echo "$FID"
+        REQ_OUT="${REQ_OUT}i"
     fi
 
     if [[ $REQ_IN = *s* ]]; then
         echo "$FILE_SIZE"
         REQ_OUT="${REQ_OUT}s"
+    fi
+
+    if [[ $REQ_IN = *v* ]]; then
+        echo "$URL"
+        REQ_OUT="${REQ_OUT}v"
     fi
 
     echo $REQ_OUT
