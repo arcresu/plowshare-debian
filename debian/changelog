@@ -1,4 +1,4 @@
-plowshare4 (1.0.6-4~git9e17736-0ppa1ubuntu1) utopic; urgency=medium
+plowshare4 (1.1.0-29~git0df22d0-0ppa1) utopic; urgency=medium
 
   [ Matthieu Crapet ]
   * [d5da3f8] thefilebay: fix download & upload (upstream modified)
@@ -35,7 +35,8 @@ plowshare4 (1.0.6-4~git9e17736-0ppa1ubuntu1) utopic; urgency=medium
   * [68f8b28] turbobit (upload): add support for folders
 
   [ Matthieu Crapet ]
-  * [d5a292c] core.sh (captcha_method_translate): cosmetics, fancier error message
+  * [d5a292c] core.sh (captcha_method_translate): cosmetics, fancier error
+     message
   * [b026fcb] turbobit: premium download fix
 
   [ roadman17 ]
@@ -78,7 +79,8 @@ plowshare4 (1.0.6-4~git9e17736-0ppa1ubuntu1) utopic; urgency=medium
   * [5840909] Makefile: fix dependencies
 
   [ Jan ]
-  * [19e890c] 180upload (download, upload): fix spilling of account type to STDOUT
+  * [19e890c] 180upload (download, upload): fix spilling of account type
+     to STDOUT
   * [0df22d0] shareonline_biz (download): consider additional URL format
 
  -- Carl Suster <carl@contraflo.ws>  Wed, 07 Jan 2015 15:36:52 +1100
