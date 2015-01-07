@@ -1,4 +1,4 @@
-plowshare4 (1.1.0-12~gite7e1617-0ppa1) trusty; urgency=medium
+plowshare4 (1.0.6-4~git9e17736-0ppa1ubuntu1) utopic; urgency=medium
 
   [ Matthieu Crapet ]
   * [d5da3f8] thefilebay: fix download & upload (upstream modified)
@@ -35,8 +35,7 @@ plowshare4 (1.1.0-12~gite7e1617-0ppa1) trusty; urgency=medium
   * [68f8b28] turbobit (upload): add support for folders
 
   [ Matthieu Crapet ]
-  * [d5a292c] core.sh (captcha_method_translate): cosmetics, fancier error
-    message
+  * [d5a292c] core.sh (captcha_method_translate): cosmetics, fancier error message
   * [b026fcb] turbobit: premium download fix
 
   [ roadman17 ]
@@ -55,7 +54,34 @@ plowshare4 (1.1.0-12~gite7e1617-0ppa1) trusty; urgency=medium
   * [32c0f19] 1fichier (download): fix wrong filename (again)
   * [e7e1617] plowprobe: add %v and %V --printf tokens
 
- -- Carl Suster <carl@contraflo.ws>  Mon, 15 Dec 2014 13:27:11 +1100
+  [ Matthieu Crapet ]
+  * [498f739] AUTHORS, INSTALL, README: minor update
+  * [7d7d2d5] core.sh (captcha_process): check for weird $TERM value (fix)
+  * [0b3b145] 1fichier (download): quickfix, support old url scheme
+  * [569f8b2] uptobox (upload): small fix (wrong variable name)
+  * [e2ea390] vidzi.tv: new module
+  * [5e2ec21] filecloud: fix, updated api url
+
+  [ Jan ]
+  * [3bc9d67] 180upload: add support for free account
+  * [6849a9f] 180upload: support for session caching
+
+  [ Matthieu Crapet ]
+  * [4f856f8] plow*, core.sh: cleanup, minor refactors
+  * [35a6c0c] zippyshare (download): fix
+  * [34c0461] core.sh (list_submit): allow single name as second argument
+  * [d58ed60] exoshare (list): fix
+  * [0988e69] core.sh (translate_size): minor, test fix
+  * [9bc9821] core.sh (list_submit): test fix
+
+  [ James Nieves ]
+  * [5840909] Makefile: fix dependencies
+
+  [ Jan ]
+  * [19e890c] 180upload (download, upload): fix spilling of account type to STDOUT
+  * [0df22d0] shareonline_biz (download): consider additional URL format
+
+ -- Carl Suster <carl@contraflo.ws>  Wed, 07 Jan 2015 15:36:52 +1100
 
 plowshare4 (1.0.6-4~git9e17736-0ppa1) trusty; urgency=medium
 
