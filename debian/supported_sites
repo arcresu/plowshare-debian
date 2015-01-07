@@ -1,0 +1,5 @@
+#!/bin/sh
+
+tail -n+2 src/modules/config \
+  | cut -d' ' -f1 \
+  | sed -e 's/$/,/g' -e 's/^/ /g' -e '$ s/,/./'
