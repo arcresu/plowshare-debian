@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Common set of functions used by modules
-# Copyright (c) 2010-2014 Plowshare team
+# Copyright (c) 2010-2015 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -22,7 +22,7 @@
 set -o pipefail
 
 # Each time an API is updated, this value will be increased
-declare -r PLOWSHARE_API_VERSION=1
+declare -r PLOWSHARE_API_VERSION=2
 
 # User configuration directory (contains plowshare.conf, exec/, storage/)
 declare -r PLOWSHARE_CONFDIR="$HOME/.config/plowshare"
@@ -94,11 +94,11 @@ logcat_report() {
 
 # This should not be called within modules
 log_report() {
-    test $VERBOSE -lt 4 || stderr "rep: $@"
+    test $VERBOSE -lt 4 || stderr 'rep:' "$@"
 }
 
 log_debug() {
-    test $VERBOSE -lt 3 || stderr "dbg: $@"
+    test $VERBOSE -lt 3 || stderr 'dbg:' "$@"
 }
 
 # This should not be called within modules
@@ -164,7 +164,7 @@ curl() {
     else
         local TEMPCURL=$(create_tempfile)
         log_report "${OPTIONS[@]}" "${CURL_ARGS[@]}"
-        command curl "${OPTIONS[@]}" "${CURL_ARGS[@]}" --show-error --silent 2>&1 >"$TEMPCURL" || DRETVAL=$?
+        command curl "${OPTIONS[@]}" "${CURL_ARGS[@]}" --show-error --silent >"$TEMPCURL" 2>&1 || DRETVAL=$?
         FILESIZE=$(get_filesize "$TEMPCURL")
         log_report "Received $FILESIZE bytes. DRETVAL=$DRETVAL"
         log_report '=== CURL BEGIN ==='
@@ -1151,7 +1151,7 @@ post_login() {
     fi
 
     # Seem faster than
-    # IFS=":" read -r USER PASSWORD <<< "$AUTH"
+    # IFS=':' read -r USER PASSWORD <<< "$AUTH"
     USER=$(echo "${AUTH%%:*}" | uri_encode_strict)
     PASSWORD=$(echo "${AUTH#*:}" | uri_encode_strict)
 
@@ -1395,7 +1395,7 @@ captcha_process() {
         if [[ "$METHOD_VIEW" != *view-aa* ]]; then
             if check_exec tput; then
                 local TYPE
-                if [ -z "$TERM" -a "$TERM" != 'dumb' ]; then
+                if [ -z "$TERM" -o "$TERM" = 'dumb' ]; then
                     log_notice 'Invalid $TERM value. Terminal type forced to vt100.'
                     TYPE='-Tvt100'
                 fi
@@ -1803,7 +1803,7 @@ captcha_process() {
     # Second pass for cleaning up
     case $METHOD_VIEW in
         X-*)
-            [[ $PRG_PID ]] && kill -HUP $PRG_PID 2>&1 >/dev/null
+            [[ $PRG_PID ]] && kill -HUP $PRG_PID >/dev/null 2>&1
             ;;
         imgur)
             image_delete_imgur "$IMG_HASH" || true
@@ -2286,7 +2286,7 @@ split_auth() {
 # Report list results. Only used by list module functions.
 #
 # $1: links list (one url per line)
-# $2: (optional) name list (one filename per line)
+# $2: (optional) filename or name list (one hoster name per line)
 # $3: (optional) link prefix (gets prepended to every link)
 # $4: (optional) link suffix (gets appended to every link)
 # $?: 0 for success or $ERR_LINK_DEAD
@@ -2301,11 +2301,20 @@ list_submit() {
         mapfile -t LINKS <<< "$1"
         mapfile -t NAMES <<< "$2"
 
-        for I in "${!LINKS[@]}"; do
-            test "${LINKS[$I]}" || continue
-            echo "$3${LINKS[$I]}$4"
-            echo "${NAMES[$I]}"
-        done
+        # One single name for all links
+        if [[ "${#NAMES[@]}" -eq 1 ]]; then
+            for I in "${!LINKS[@]}"; do
+                test "${LINKS[$I]}" || continue
+                echo "$3${LINKS[$I]}$4"
+                echo "${NAMES[0]}"
+            done
+        else
+            for I in "${!LINKS[@]}"; do
+                test "${LINKS[$I]}" || continue
+                echo "$3${LINKS[$I]}$4"
+                echo "${NAMES[$I]}"
+            done
+        fi
     else
         while IFS= read -r LINE; do
             test "$LINE" || continue
@@ -2324,8 +2333,8 @@ translate_size() {
     local S T
 
     N=${N//	}
-    if [ "$N" = '' ]; then
-        log_error "$FUNCNAME: argument expected"
+    if [ -z "$N" ]; then
+        log_error "$FUNCNAME: non empty argument expected"
         return $ERR_FATAL
     fi
 
@@ -2578,7 +2587,7 @@ print_options() {
 
     while read -r; do
         test "$REPLY" || continue
-        IFS="," read -r VAR SHORT LONG TYPE MSG <<< "$REPLY"
+        IFS=',' read -r VAR SHORT LONG TYPE MSG <<< "$REPLY"
         if [ -n "$SHORT" ]; then
             if test "$TYPE"; then
                 STR="-${SHORT} ${TYPE#*=}"
@@ -2785,12 +2794,13 @@ process_configfile_module_options() {
         "$CONFIG" | sed -e '/^\(#\|\[\|[[:space:]]*$\)/d') || true
 
     if [ -n "$SECTION" -a -n "$OPTIONS" ]; then
+        local VAR SHORT LONG
         local -lr M=$2
 
         # For example:
         # AUTH,a,auth,a=USER:PASSWORD,User account
         while read -r; do
-            IFS="," read -r VAR SHORT LONG TYPE_HELP <<< "$REPLY"
+            IFS=',' read -r VAR SHORT LONG _ <<< "$REPLY"
 
             # Look for 'module/option_name' (short or long) in section list
             LINE=$(sed -ne "/^[[:space:]]*$M\/\($SHORT\|$LONG\)[[:space:]]*=/{p;q}" <<< "$SECTION") || true
@@ -2984,7 +2994,7 @@ quote_multiple() {
 quote_array() {
     local -a ARR
     local E
-    IFS="," read -r -a ARR <<< "$1"
+    IFS=',' read -r -a ARR <<< "$1"
     echo '('
     for E in "${ARR[@]}"; do
         quote "$(strip <<< "$E")"
@@ -3220,7 +3230,7 @@ check_argument_type() {
             if find_in_array ITEMS[@] "$VAL"; then
                 RET=0
             else
-                log_error "$NAME ($OPT): wrong value '$VAL'. Possible values are: ${ITEMS[@]}."
+                log_error "$NAME ($OPT): wrong value '$VAL'. Possible values are: ${ITEMS[*]}."
             fi
         fi
 
@@ -3259,7 +3269,7 @@ process_options() {
     local -a UNUSED_OPTS UNUSED_ARGS
     local -a OPTS_VAR_LONG OPTS_NAME_LONG OPTS_TYPE_LONG
     local -a OPTS_VAR_SHORT OPTS_NAME_SHORT OPTS_TYPE_SHORT
-    local ARG VAR SHORT LONG TYPE HELP SKIP_ARG FOUND FUNC
+    local ARG VAR SHORT LONG TYPE SKIP_ARG FOUND FUNC
 
     shift 3
 
@@ -3275,7 +3285,7 @@ process_options() {
     else
         # Populate OPTS_* vars
         while read -r ARG; do
-            IFS="," read -r VAR SHORT LONG TYPE HELP <<< "$ARG"
+            IFS=',' read -r VAR SHORT LONG TYPE _ <<< "$ARG"
             if [ -n "$LONG" ]; then
                 OPTS_VAR_LONG[${#OPTS_VAR_LONG[@]}]=$VAR
                 OPTS_NAME_LONG[${#OPTS_NAME_LONG[@]}]="--$LONG"
