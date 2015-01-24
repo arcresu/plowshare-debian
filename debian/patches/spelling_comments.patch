@@ -3,8 +3,8 @@ Author: Carl Suster <carl@contraflo.ws>
 
 --- a/src/core.sh
 +++ b/src/core.sh
-@@ -2544,7 +2544,7 @@
-     trap remove_tempfiles EXIT
+@@ -2577,7 +2577,7 @@
+     trap exit_handler EXIT
  }
  
 -# Check existance of executable in $PATH
@@ -14,7 +14,7 @@ Author: Carl Suster <carl@contraflo.ws>
  # $1: Executable to check
 --- a/src/download.sh
 +++ b/src/download.sh
-@@ -862,7 +862,7 @@
+@@ -884,7 +884,7 @@
  test "$UMASK" && umask 0066
  
  # Remember last host because hosters may require waiting between

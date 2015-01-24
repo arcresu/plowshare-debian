@@ -15,7 +15,7 @@ Author: Carl Suster <carl@contraflo.ws>
  GETVERSION,,version,,Output plowdel version information and exit
  ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
  EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
-@@ -94,7 +94,7 @@
+@@ -98,7 +98,7 @@
  # Process command-line (plowdel early options)
  eval "$(process_core_options 'plowdel' "$EARLY_OPTIONS" "$@")" || exit
  
@@ -35,7 +35,7 @@ Author: Carl Suster <carl@contraflo.ws>
  GETVERSION,,version,,Output plowdown version information and exit
  ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
  EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
-@@ -755,7 +755,7 @@
+@@ -763,7 +763,7 @@
  # Process command-line (plowdown early options)
  eval "$(process_core_options 'plowdown' "$EARLY_OPTIONS" "$@")" || exit
  
@@ -55,7 +55,7 @@ Author: Carl Suster <carl@contraflo.ws>
  GETVERSION,,version,,Output plowlist version information and exit
  ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
  EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
-@@ -179,7 +179,7 @@
+@@ -183,7 +183,7 @@
  # Process command-line (plowlist early options)
  eval "$(process_core_options 'plowlist' "$EARLY_OPTIONS" "$@")" || exit
  
@@ -75,7 +75,7 @@ Author: Carl Suster <carl@contraflo.ws>
  GETVERSION,,version,,Output plowprobe version information and exit
  ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
  EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
-@@ -276,7 +276,7 @@
+@@ -287,7 +287,7 @@
  # Process command-line (plowprobe early options)
  eval "$(process_core_options 'plowprobe' "$EARLY_OPTIONS" "$@")" || exit
  
@@ -95,7 +95,7 @@ Author: Carl Suster <carl@contraflo.ws>
  GETVERSION,,version,,Output plowup version information and exit
  ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
  EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
-@@ -258,7 +258,7 @@
+@@ -264,7 +264,7 @@
  # Process command-line (plowup early options)
  eval "$(process_core_options 'plowup' "$EARLY_OPTIONS" "$@")" || exit
  
