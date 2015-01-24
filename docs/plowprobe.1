@@ -1,4 +1,4 @@
-.\" Copyright (c) 2013-2014 Plowshare Team
+.\" Copyright (c) 2013-2015 Plowshare Team
 .\"
 .\" This is free documentation; you can redistribute it and/or
 .\" modify it under the terms of the GNU General Public License as
@@ -19,7 +19,7 @@
 .\" License along with this manual; if not, see
 .\" <http://www.gnu.org/licenses/>.
 
-.TH "plowprobe" "1" "August 28, 2014" "GPL" "Plowshare for Bash 4"
+.TH "plowprobe" "1" "January 11, 2015" "GPL" "Plowshare for Bash 4"
 
 .SH NAME
 plowprobe \- Gather information from file sharing download links
@@ -62,7 +62,7 @@ probe function return status (0 for success, 13 for dead link, see list below)
 filename (can be empty string)
 .TP
 \fI%F\fR
-empty if %f is empty, or alias to \fB"# %f%n"\fR.
+empty if \fB%f\fR is empty, or alias to "\fB# %f%n\fR".
 .TP
 \fI%h\fR
 filehash (can be empty string if not available). Usually MD5 or SHA1. If hoster supports several algorithms, the longest digest is used.
@@ -77,7 +77,7 @@ module name
 newline
 .TP
 \fI%s\fR
-filesize in bytes  (can be empty string if not available). Note: it's often approximative.
+filesize (positive integer) in bytes (can be empty string if not available). Note: It's often approximative.
 .TP
 \fI%t\fR
 tabulation character
@@ -87,6 +87,17 @@ file timestamp (can be empty string if not available). Unix epoch time is prefer
 .TP
 \fI%u\fR
 download (source) url
+.TP
+\fI%U\fR
+same as \fB%u\fR but url is escaped for JSON usage
+.TP
+\fI%v\fR
+alternate or refactored download url.
+This can be for example fixing primary hostname (to avoid HTTP 301 redirection), or force HTTPS protocol.
+If not available, alias to \fB%u\fR.
+.TP
+\fI%V\fR
+same as \fB%v\fR but url is escaped for JSON usage
 .P
 Note: Metadata are often not fully available from hosters nor implemented by all
 modules.
@@ -114,6 +125,9 @@ Set output verbosity level:
 Alias for \fB-v0\fR. Do not print any debug messages.
 .SS Miscellaneous options
 .TP
+.B "   " --no-color
+Disables log messages (stderr only) output coloring.
+.TP
 .B "   " --follow
 If no module is found for link, follow HTTP redirects (curl \-L). Default is disabled.
 .TP
@@ -123,13 +137,19 @@ Echo module name for each URL and exit. Faster than \fB--printf=%m\fR. Useful fo
 .B "   " --no-curlrc
 Do not use curl config file (~/.curlrc).
 .TP
+.BI "   " " " --curlrc= FILE
+Force using an alternate curl configuration file. Replaces ~/.curlrc if it exists.
+This option has no effect when
+.B --no\-curlrc
+is defined.
+.TP
 .B "   " --no-plowsharerc
 Do not consider any configuration file.
 .TP
 .BI "   " " " --plowsharerc= FILE
 Force using an alternate configuration file (instead of per-user or systemwide plowshare.conf).
 This option has no effect when
-.B --no-plowsharerc
+.B --no\-plowsharerc
 is defined.
 .TP
 .B "   " --modules
@@ -166,8 +186,12 @@ $ cat file_with_links.txt | plowprobe - > file_with_active_links.txt
 .EE
 .SS 2) Custom results format
 .EX
-# Print links information: filename and size
-$ plowprobe \-\-printf '# %f (%s)%n%u%n' http://www.sendspace.com/file/5njdw7
+.sp 1
+# Print links information: filename and hash
+$ plowprobe \-\-printf '# %f (%h)%n%u%n' http://www.sendspace.com/file/5njdw7
+.sp 1
+# Print a JSON result
+$ plowprobe \-\-printf '{"url":"%U","size":%s}%n' http://www.sendspace.com/file/5njdw7
 .EE
 
 .\" ****************************************************************************
@@ -221,7 +245,7 @@ is invoked with multiple links and one or several errors occur, the first error 
 .SH AUTHORS
 Plowshare was initially written by Arnau Sanchez. See the AUTHORS file for a list of some of the many other contributors.
 
-Plowshare is (C) 2010-2014 The Plowshare Team
+Plowshare is (C) 2010-2015 The Plowshare Team
 .SH "SEE ALSO"
 .BR plowdown (1),
 .BR plowup (1),

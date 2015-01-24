@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Retrieve list of links from a shared-folder (sharing site) url
-# Copyright (c) 2010-2014 Plowshare team
+# Copyright (c) 2010-2015 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -34,7 +34,10 @@ QUIET,q,quiet,,Alias for -v0
 INTERFACE,i,interface,s=IFACE,Force IFACE network interface
 RECURSE,R,recursive,,Recurse into sub folders
 PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each link). Default string is: \"%F%u%n\".
-NO_MODULE_FALLBACK,,fallback,,If no module is found for link, simply list all URLs contained in page"
+NO_COLOR,,no-color,,Disables log notice & log error output coloring
+NO_MODULE_FALLBACK,,fallback,,If no module is found for link, simply list all URLs contained in page
+EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
+NO_CURLRC,,no-curlrc,,Do not use curlrc config file"
 
 
 # This function is duplicated from download.sh
@@ -84,6 +87,7 @@ module_config_has_subfolders() {
 # %f: filename (can be an empty string)
 # %F: alias for "# %f%n" or empty string if %f is empty
 # %u: download url
+# %U: download url (JSON string)
 # %m: module name
 # and also:
 # %n: newline
@@ -96,7 +100,7 @@ module_config_has_subfolders() {
 pretty_check() {
     # This must be non greedy!
     local S TOKEN
-    S=${1//%[fFumnt%]}
+    S=${1//%[fFuUmnt%]}
     TOKEN=$(parse_quiet . '\(%.\)' <<< "$S")
     if [ -n "$TOKEN" ]; then
         log_error "Bad format string: unknown sequence << $TOKEN >>"
@@ -128,7 +132,7 @@ pretty_print() {
         fi
 
         handle_tokens "$FMT" '%raw,%' '%t,	' "%n,$CR" \
-            "%m,$2" "%u,$URL" "%f,$NAME"
+            "%m,$2" "%u,$URL" "%f,$NAME" "%U,$(json_escape "$URL")"
     done
 }
 
@@ -206,6 +210,12 @@ elif [ -z "$VERBOSE" ]; then
     declare -r VERBOSE=2
 fi
 
+if [ -n "$NO_COLOR" ]; then
+    unset COLOR
+else
+    declare -r COLOR=yes
+fi
+
 if [ $# -lt 1 ]; then
     log_error 'plowlist: no folder URL specified!'
     log_error "plowlist: try \`plowlist --help' for more information."
@@ -222,6 +232,16 @@ fi
 
 if [ -n "$PRINTF_FORMAT" ]; then
     pretty_check "$PRINTF_FORMAT" || exit
+fi
+
+if [ -n "$EXT_CURLRC" ]; then
+    if [ -n "$NO_CURLRC" ]; then
+        log_notice 'plowlist: --no-curlrc selected and prevails over --curlrc'
+    else
+        log_notice 'plowlist: using alternate curl configuration file'
+    fi
+elif [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
+    log_debug 'using local ~/.curlrc'
 fi
 
 # Print chosen options
@@ -310,7 +330,7 @@ if [ ${#RETVALS[@]} -eq 0 ]; then
 elif [ ${#RETVALS[@]} -eq 1 ]; then
     exit ${RETVALS[0]}
 else
-    log_debug "retvals:${RETVALS[@]}"
+    log_debug "retvals:${RETVALS[*]}"
     # Drop success values
     RETVALS=(${RETVALS[@]/#0*} -$ERR_FATAL_MULTIPLE)
 

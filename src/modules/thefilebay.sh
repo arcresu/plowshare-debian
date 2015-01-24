@@ -39,17 +39,21 @@ thefilebay_login() {
     local -r AUTH=$1
     local -r COOKIE_FILE=$2
     local -r BASE_URL=$3
-    local LOGIN_DATA LOGIN_RESULT
+    local LOGIN_DATA LOGIN_RESULT STATUS ERR
 
-    LOGIN_DATA='loginUsername=$USER&loginPassword=$PASSWORD&submit=Login&submitme=1'
+    LOGIN_DATA='username=$USER&password=$PASSWORD'
     LOGIN_RESULT=$(post_login "$AUTH" "$COOKIE_FILE" "$LOGIN_DATA" \
-        "$BASE_URL/login.php" -L) || return
+        "$BASE_URL/ajax/_account_login.ajax.php") || return
 
-    # Three entries are added into cookie file:
-    # filehosting, incap_ses_???_[0-9]*, visid_incap_[0-9]*
+    # filehosting cookie entry is added
 
-    # <ul class='pageErrors'>
-    if match 'Your username and password are invalid<' "$LOGIN_RESULT"; then
+    # {"error":"","login_status":"success","redirect_url":"https:\/\/thefilebay.com\/account_home.html"}
+    # {"error":"Your username and password are invalid","login_status":"invalid"}
+    STATUS=$(parse_json_quiet 'login_status' <<< "$LOGIN_RESULT")
+
+    if [ "$STATUS" != 'success' ]; then
+        ERR=$(parse_json 'error' <<< "$LOGIN_RESULT")
+        log_debug "remote error: $ERR"
         return $ERR_LOGIN_FAILED
     fi
 }
@@ -74,10 +78,6 @@ thefilebay_download() {
         return $ERR_LINK_DEAD
     fi
 
-    # Empty CSS ;) Renew "filehosting" entry date
-    FILE_URL=$(parse_attr '_s.php?' href <<< "$PAGE") || return
-    curl -c "$COOKIE_FILE" -b "$COOKIE_FILE" -o /dev/null "$FILE_URL" || return
-
     WAIT_TIME=$(parse 'var[[:space:]]\+seconds' '=[[:space:]]*\([^;]*\)' <<< "$PAGE")
     wait $((WAIT_TIME)) || return
 
@@ -98,33 +98,34 @@ thefilebay_upload() {
     local -r DEST_FILE=$3
     local -r BASE_URL='https://thefilebay.com'
     local PAGE ERR DL_URL DEL_URL
-    local FORM_HTML FORM_ACTION SESSID TRACKER
+    local POST_URL SESSID TRACKER
 
     if [ -n "$AUTH_FREE" ]; then
         thefilebay_login "$AUTH_FREE" "$COOKIE_FILE" "$BASE_URL" || return
     fi
 
     PAGE=$(curl -c "$COOKIE_FILE" -b "$COOKIE_FILE" "$BASE_URL") || return
-    FORM_HTML=$(grep_form_by_order "$PAGE" 2) || return
-    FORM_ACTION=$(echo "$FORM_HTML" | parse_form_action) || return
+    POST_URL=$(parse '[[:space:]]\+url:' "url:[[:space:]]*'\([^']*\)" <<< "$PAGE") || return
 
-    # formData: {_sessionid: 'p5qq9hbjhqssdofkf7q6b3ue27', cTracker: '257a5ec7adcecfc5fd691621af6d22d9', maxChunkSize: maxChunkSize},
-    SESSID=$(parse 'formData:[[:space:]]*{' "_sessionid:[[:space:]]*'\([^']*\)" <<< "$PAGE")
-    TRACKER=$(parse 'formData:[[:space:]]*{' "cTracker:[[:space:]]*'\([^']*\)" <<< "$PAGE")
+    # data.formData = {_sessionid: 'p5qq9hbjhqssdofkf7q6b3ue27', cTracker: '257a5ec7adcecfc5fd691621af6d22d9', maxChunkSize: maxChunkSize},
+    SESSID=$(parse 'data\.formData[[:space:]]*=' "_sessionid:[[:space:]]*'\([^']*\)" <<< "$PAGE") || return
+    TRACKER=$(parse 'data\.formData[[:space:]]*=' "cTracker:[[:space:]]*'\([^']*\)" <<< "$PAGE") || return
 
     log_debug "session id: '$SESSID'"
     log_debug "tracker: '$TRACKER'"
 
-    # Empty CSS ;) Renew "filehosting" entry date
-    DL_URL=$(parse_attr '_s.php?' href <<< "$PAGE") || return
-    curl -c "$COOKIE_FILE" -b "$COOKIE_FILE" -o /dev/null "$DL_URL" || return
+    # Get "filehosting" cookie entry for serverXXX.thefilebay.com domain
+    #curl -X OPTIONS -c "$COOKIE_FILE" -b "$COOKIE_FILE" -o /dev/null "$POST_URL" || return
 
+    # Should returns:
+    # Content-Disposition: inline; filename="files.json"
     PAGE=$(curl_with_log -b "$COOKIE_FILE" \
         -F "_sessionid=$SESSID" \
         -F "cTracker=$TRACKER" \
-        -F 'maxChunkSize=5000000' \
+        -F 'maxChunkSize=100000000' \
+        -F 'folderId=' \
         -F "files[]=@$FILE;filename=$DEST_FILE" \
-        "$FORM_ACTION") || return
+        "$POST_URL") || return
 
      ERR=$(parse_json_quiet 'error' <<< "$PAGE")
      if [ -n "$ERR" -a "$ERR" != 'null' ]; then

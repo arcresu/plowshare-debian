@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Upload files to file sharing websites
-# Copyright (c) 2010-2014 Plowshare team
+# Copyright (c) 2010-2015 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -38,6 +38,7 @@ TIMEOUT,t,timeout,n=SECS,Timeout after SECS seconds of waits
 MAXRETRIES,r,max-retries,N=NUM,Set maximum retries for upload failures (fatal, network errors). Default is 0 (no retry).
 NAME_FORMAT,,name,s=FORMAT,Format destination filename (applies on each file argument). Default string is: \"%f\".
 CACHE,,cache,C|none|session|shared=METHOD,Policy for storage data. Available: none, session (default), shared.
+TEMP_DIR,,temp-directory,D=DIR,Directory for temporary files (cookies, images)
 CAPTCHA_METHOD,,captchamethod,s=METHOD,Force specific captcha solving method. Available: online, imgur, x11, fb, nox, none.
 CAPTCHA_PROGRAM,,captchaprogram,F=PROGRAM,Call external program/script for captcha solving.
 CAPTCHA_9KWEU,,9kweu,s=KEY,9kw.eu captcha (API) key
@@ -45,8 +46,9 @@ CAPTCHA_ANTIGATE,,antigate,s=KEY,Antigate.com captcha key
 CAPTCHA_BHOOD,,captchabhood,a=USER:PASSWD,CaptchaBrotherhood account
 CAPTCHA_COIN,,captchacoin,s=KEY,captchacoin.com API key
 CAPTCHA_DEATHBY,,deathbycaptcha,a=USER:PASSWD,DeathByCaptcha account
-PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful upload). Default string is: \"%D%A%u%n\".
-TEMP_DIR,,temp-directory,D=DIR,Directory for temporary files (cookies, images)
+PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful upload). Default string is: \"%L%M%u%n\".
+NO_COLOR,,no-color,,Disables log notice & log error output coloring
+EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
 NO_CURLRC,,no-curlrc,,Do not use curlrc config file"
 
 
@@ -96,7 +98,7 @@ module_exist() {
     local MODULE
 
     for MODULE in "${!1}"; do
-        if [[ $N1 = $MODULE || $N2 = $MODULE ]]; then
+        if [[ $N1 = "$MODULE" || $N2 = "$MODULE" ]]; then
             echo "$MODULE"
             return 0
         fi
@@ -116,13 +118,16 @@ module_config_remote_upload() {
 # Interpreted sequences are:
 # %f: destination (remote) filename
 # %u: download url
+# %U: download url (JSON string)
 # %d: delete url
+# %D: delete url (JSON string)
 # %a: admin url/code
+# %A: admin url/code (JSON string)
 # %l: source (local) filename
 # %m: module name
 # %s: filesize (in bytes)
-# %D: alias for "#DEL %d%n" or empty string (if %d is empty)
-# %A: alias for "#ADM %a%n" or empty string (if %a is empty)
+# %L: alias for "#DEL %d%n" or empty string (if %d is empty)
+# %M: alias for "#ADM %a%n" or empty string (if %a is empty)
 # and also:
 # %n: newline
 # %t: tabulation
@@ -134,7 +139,7 @@ module_config_remote_upload() {
 pretty_check() {
     # This must be non greedy!
     local S TOKEN
-    S=${1//%[fudalmsADnt%]}
+    S=${1//%[fuUdDaAlmsLMnt%]}
     TOKEN=$(parse_quiet . '\(%.\)' <<< "$S")
     if [ -n "$TOKEN" ]; then
         log_error "Bad format string: unknown sequence << $TOKEN >>"
@@ -151,28 +156,29 @@ pretty_print() {
 
     test "${FMT#*%%}" != "$FMT" && FMT=$(replace_all '%%' "%raw" <<< "$FMT")
 
-    if test "${FMT#*%D}" != "$FMT"; then
+    if test "${FMT#*%L}" != "$FMT"; then
         if [ -z "${A[4]}" ]; then
-            FMT=${FMT//%D/}
+            FMT=${FMT//%L/}
         else
-            FMT=$(replace_all '%D' "#DEL %d%n" <<< "$FMT")
+            FMT=$(replace_all '%L' "#DEL %d%n" <<< "$FMT")
         fi
     fi
 
-    if test "${FMT#*%A}" != "$FMT"; then
+    if test "${FMT#*%M}" != "$FMT"; then
         if [ -z "${A[5]}" ]; then
-            FMT=${FMT//%A/}
+            FMT=${FMT//%M/}
         else
-            FMT=$(replace_all '%A' "#ADM %a%n" <<< "$FMT")
+            FMT=$(replace_all '%M' "#ADM %a%n" <<< "$FMT")
         fi
     fi
 
     test "${FMT#*%s}" != "$FMT" && \
-        FMT=$(replace_all '%s' $(get_filesize "${A[1]}") <<< "$FMT")
+        FMT=$(replace_all '%s' "$(get_filesize "${A[1]}")" <<< "$FMT")
 
     handle_tokens "$FMT" '%raw,%' '%t,	' "%n,$CR" \
         "%m,${A[0]}" "%l,${A[1]}" "%f,${A[2]}" "%u,${A[3]}" \
-        "%d,${A[4]}" "%a,${A[5]}"
+        "%d,${A[4]}" "%a,${A[5]}" "%U,$(json_escape "${A[3]}")" \
+        "%D,$(json_escape "${A[4]}")" "%A,$(json_escape "${A[5]}")"
 }
 
 # Filename (arguments) printf format
@@ -216,10 +222,10 @@ pretty_name_print() {
     test "${FMT#*%%}" != "$FMT" && FMT=$(replace_all '%%' "%raw" <<< "$FMT")
 
     test "${FMT#*%s}" != "$FMT" && \
-        FMT=$(replace_all '%s' $(get_filesize "${A[1]}") <<< "$FMT")
+        FMT=$(replace_all '%s' "$(get_filesize "${A[1]}")" <<< "$FMT")
 
     test "${FMT#*%h}" != "$FMT" && \
-        FMT=$(replace_all '%h' $(md5_file "${A[1]}") <<< "$FMT")
+        FMT=$(replace_all '%h' "$(md5_file "${A[1]}")" <<< "$FMT")
 
     handle_tokens "$FMT" '%raw,%' \
         "%m,${A[0]}" "%l,${A[1]}" "%f,${A[2]}" \
@@ -285,6 +291,12 @@ elif [ -z "$VERBOSE" ]; then
     declare -r VERBOSE=2
 fi
 
+if [ -n "$NO_COLOR" ]; then
+    unset COLOR
+else
+    declare -r COLOR=yes
+fi
+
 if [ $# -lt 1 ]; then
     log_error 'plowup: no module specified!'
     log_error "plowup: try \`plowup --help' for more information."
@@ -336,7 +348,13 @@ else
     [ -n "$CAPTCHA_DEATHBY" ] && log_debug 'plowup: --deathbycaptcha selected'
 fi
 
-if [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
+if [ -n "$EXT_CURLRC" ]; then
+    if [ -n "$NO_CURLRC" ]; then
+        log_notice 'plowup: --no-curlrc selected and prevails over --curlrc'
+    else
+        log_notice 'plowup: using alternate curl configuration file'
+    fi
+elif [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
     log_debug 'using local ~/.curlrc'
 fi
 
@@ -376,7 +394,7 @@ eval "$(process_module_options "$MODULE" UPLOAD \
     "${COMMAND_LINE_MODULE_OPTS[@]}")" || true
 
 if [ ${#UNUSED_OPTS[@]} -ne 0 ]; then
-    log_notice "Unused option(s): ${UNUSED_OPTS[@]}"
+    log_notice "Unused option(s): ${UNUSED_OPTS[*]}"
 fi
 
 # Remove module name from argument list
@@ -506,7 +524,7 @@ for FILE in "${COMMAND_LINE_ARGS[@]}"; do
 
             DATA=("$MODULE" "$LOCALFILE" "$DESTFILE" \
                   "$DL_URL" "$DEL_URL" "$ADMIN_URL_OR_CODE")
-            pretty_print DATA[@] "${PRINTF_FORMAT:-%D%A%u%n}"
+            pretty_print DATA[@] "${PRINTF_FORMAT:-%L%M%u%n}"
         else
             log_error 'Output URL expected'
             URETVAL=$ERR_FATAL
@@ -543,7 +561,7 @@ if [ ${#RETVALS[@]} -eq 0 ]; then
 elif [ ${#RETVALS[@]} -eq 1 ]; then
     exit ${RETVALS[0]}
 else
-    log_debug "retvals:${RETVALS[@]}"
+    log_debug "retvals:${RETVALS[*]}"
     # Drop success values
     RETVALS=(${RETVALS[@]/#0*} -$ERR_FATAL_MULTIPLE)
 

@@ -37,9 +37,10 @@ MANDIR  = $(PREFIX)/share/man/man
 
 # Rules
 
-install: $(DESTDIR)$(DATADIR) patch_git_version patch_bash_completion
+install: install_files patch_git_version patch_bash_completion
 
-$(DESTDIR)$(DATADIR):
+install_files:
+	@! test -d $(DESTDIR)$(DATADIR) || echo "===[Plowshare update]==="
 	$(INSTALL) -d $(DESTDIR)$(BINDIR)
 	$(INSTALL) -d $(DESTDIR)$(DATADIR)
 	$(INSTALL) -d $(DESTDIR)$(DATADIR)/modules
@@ -68,13 +69,13 @@ uninstall:
 	@$(RM) $(addprefix $(DESTDIR)$(MANDIR)5/, $(MANPAGES5))
 	@$(RM) $(addprefix $(DESTDIR)$(PREFIX)/share/bash-completion/completions/, $(MANPAGES1:%.1=%))
 
-patch_git_version: $(DESTDIR)$(DATADIR)
+patch_git_version: install_files
 	@v=`$(GIT_VERSION)` && \
 	for file in $(SRCS); do \
 		$(GNU_SED) -i -e 's/^\(declare -r VERSION=\).*/\1'"'$$v'"'/' $(DESTDIR)$(DATADIR)/$$file; \
-	done; \
+	done
 
-patch_bash_completion: $(DESTDIR)$(DATADIR)
+patch_bash_completion: install_files
 	@$(INSTALL) -d $(DESTDIR)$(PREFIX)/share/bash-completion/completions
 	@$(GNU_SED) -e '/cut/s,/usr/local/share/plowshare4,$(DATADIR),' $(BASH_COMPL) > $(DESTDIR)$(PREFIX)/share/bash-completion/completions/plowdown
 	@cd $(DESTDIR)$(PREFIX)/share/bash-completion/completions && $(LN_S) plowdown plowup
@@ -83,9 +84,9 @@ patch_bash_completion: $(DESTDIR)$(DATADIR)
 	@cd $(DESTDIR)$(PREFIX)/share/bash-completion/completions && $(LN_S) plowdown plowprobe
 
 # Note: sed append syntax is not BSD friendly!
-patch_gnused: $(DESTDIR)$(DATADIR)
+patch_gnused: install_files
 	@for file in $(SRCS); do \
 		$(GNU_SED) -i -e '/\/licenses\/>/ashopt -s expand_aliases; alias sed='\''$(GNU_SED)'\' "$(DESTDIR)$(DATADIR)/$$file"; \
 	done
 
-.PHONY: install uninstall
+.PHONY: install uninstall install_files patch_git_version patch_bash_completion patch_gnused

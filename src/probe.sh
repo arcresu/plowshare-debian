@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Retrieve metadata from a download link (sharing site url)
-# Copyright (c) 2013-2014 Plowshare team
+# Copyright (c) 2013-2015 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -34,7 +34,9 @@ QUIET,q,quiet,,Alias for -v0
 GET_MODULE,,get-module,,Retrieve module name and exit. Faster than --printf=%m
 INTERFACE,i,interface,s=IFACE,Force IFACE network interface
 PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each link). Default string is: \"%F%u%n\".
+NO_COLOR,,no-color,,Disables log notice & log error output coloring
 TRY_REDIRECTION,,follow,,If no module is found for link, follow HTTP redirects (curl -L). Default is disabled.
+EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
 NO_CURLRC,,no-curlrc,,Do not use curlrc config file"
 
 
@@ -108,7 +110,7 @@ probe() {
 
     local URL_ENCODED=$(uri_encode <<< "$URL_RAW")
     local FUNCTION=${MODULE}_probe
-    local MAP I CHECK_LINK CAPS FILE_NAME FILE_SIZE FILE_HASH FILE_ID FILE_TS
+    local MAP I CHECK_LINK CAPS FILE_NAME FILE_SIZE FILE_HASH FILE_ID FILE_TS FILE_URL
     local -a DATA
 
     log_debug "Starting probing ($MODULE): $URL_ENCODED"
@@ -123,17 +125,18 @@ probe() {
     # - i: fileid [1]
     # - s: filesize in bytes. This can be approximative. [1]
     # - t: file timestamp, unspecific time format [1]
+    # - v: file url (refactored by module). Can be different from input url.
     #
     # [1] Can be empty string if not available.
     CHECK_LINK=0
 
     if test "$PRINTF_FORMAT"; then
         CAPS=c
-        for I in f h i s t; do
+        for I in f h i s t v; do
             [[ ${PRINTF_FORMAT,,} = *%$I* ]] && CAPS+=$I
         done
     else
-        CAPS=cf
+        CAPS=cfv
     fi
 
     $FUNCTION "$PCOOKIE" "$URL_ENCODED" "$CAPS" >"$PRESULT" || CHECK_LINK=$?
@@ -164,6 +167,9 @@ probe() {
                 t)
                     FILE_TS=${DATA[$I]}
                     ;;
+                v)
+                    FILE_URL=${DATA[$I]}
+                    ;;
                 *)
                     log_error "plowprobe: unknown capability \`${MAP:$I:1}', ignoring"
                     ;;
@@ -189,7 +195,8 @@ probe() {
             log_debug "Link active: $URL_ENCODED"
         fi
 
-        DATA=("$MODULE" "$URL_RAW" "$CHECK_LINK" "$FILE_NAME" "$FILE_SIZE" "$FILE_HASH" "$FILE_ID" "$FILE_TS")
+        DATA=("$MODULE" "$URL_RAW" "$CHECK_LINK" "$FILE_NAME" "$FILE_SIZE" \
+              "$FILE_HASH" "$FILE_ID" "$FILE_TS" "${FILE_URL:-$URL_ENCODED}")
         pretty_print DATA[@] "${PRINTF_FORMAT:-%F%u%n}"
 
     elif [ $CHECK_LINK -eq $ERR_LINK_DEAD ]; then
@@ -213,6 +220,9 @@ probe() {
 # %s: filesize (in bytes) or empty string (if not available).
 #     Note: it's often approximative.
 # %u: download url
+# %U: download url (JSON string)
+# %v: alternate download url refactored by module. Alias for %u if not available.
+# %V: alternate download url refactored by module (JSON string). Alias for %U if not available.
 # %T: timestamp or empty string (if not available).
 # and also:
 # %n: newline
@@ -225,7 +235,7 @@ probe() {
 pretty_check() {
     # This must be non greedy!
     local S TOKEN
-    S=${1//%[cfFhimsuTnt%]}
+    S=${1//%[cfFhimsuUTntvV%]}
     TOKEN=$(parse_quiet . '\(%.\)' <<< "$S")
     if [ -n "$TOKEN" ]; then
         log_error "Bad format string: unknown sequence << $TOKEN >>"
@@ -233,7 +243,7 @@ pretty_check() {
     fi
 }
 
-# $1: array[@] (module, dl_url, check_link, file_name, file_size, file_hash, file_id, timestamp)
+# $1: array[@] (module, dl_url, check_link, file_name, file_size, file_hash, file_id, timestamp, file_url)
 # $2: format string
 pretty_print() {
     local -a A=("${!1}")
@@ -253,7 +263,8 @@ pretty_print() {
 
     handle_tokens "$FMT" '%raw,%' '%t,	' "%n,$CR" \
         "%m,${A[0]}" "%u,${A[1]}" "%c,${A[2]}" "%f,${A[3]}" \
-        "%s,${A[4]}" "%h,${A[5]}" "%i,${A[6]}" "%T,${A[7]}"
+        "%s,${A[4]}" "%h,${A[5]}" "%i,${A[6]}" "%T,${A[7]}" \
+        "%U,$(json_escape "${A[1]}")" "%v,${A[8]}" "%V,$(json_escape "${A[8]}")"
 }
 
 #
@@ -303,6 +314,12 @@ elif [ -z "$VERBOSE" ]; then
     declare -r VERBOSE=2
 fi
 
+if [ -n "$NO_COLOR" ]; then
+    unset COLOR
+else
+    declare -r COLOR=yes
+fi
+
 if [ $# -lt 1 ]; then
     log_error 'plowprobe: no URL specified!'
     log_error "plowprobe: try \`plowprobe --help' for more information."
@@ -324,7 +341,13 @@ if [ -n "$PRINTF_FORMAT" ]; then
     pretty_check "$PRINTF_FORMAT" || exit
 fi
 
-if [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
+if [ -n "$EXT_CURLRC" ]; then
+    if [ -n "$NO_CURLRC" ]; then
+        log_notice 'plowprobe: --no-curlrc selected and prevails over --curlrc'
+    else
+        log_notice 'plowprobe: using alternate curl configuration file'
+    fi
+elif [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
     log_debug 'using local ~/.curlrc'
 fi
 
@@ -438,7 +461,7 @@ if [ ${#RETVALS[@]} -eq 0 ]; then
 elif [ ${#RETVALS[@]} -eq 1 ]; then
     exit ${RETVALS[0]}
 else
-    log_debug "retvals:${RETVALS[@]}"
+    log_debug "retvals:${RETVALS[*]}"
     # Drop success values
     RETVALS=(${RETVALS[@]/#0*} -$ERR_FATAL_MULTIPLE)
 

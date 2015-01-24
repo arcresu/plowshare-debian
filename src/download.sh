@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Download files from file sharing websites
-# Copyright (c) 2010-2014 Plowshare team
+# Copyright (c) 2010-2015 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -53,7 +53,9 @@ PRE_COMMAND,,run-before,F=PROGRAM,Call external program/script before new link p
 POST_COMMAND,,run-after,F=PROGRAM,Call external program/script after link being successfully processed
 SKIP_FINAL,,skip-final,,Don't process final link (returned by module), just skip it (for each link)
 PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful download). Default string is: \"%F%n\".
+NO_COLOR,,no-color,,Disables log notice & log error output coloring
 NO_MODULE_FALLBACK,,fallback,,If no module is found for link, simply download it (HTTP GET)
+EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
 NO_CURLRC,,no-curlrc,,Do not use curlrc config file"
 
 
@@ -491,9 +493,11 @@ download() {
                 if [ -f "$FILENAME_OUT" ]; then
                     # Can we overwrite destination file?
                     if [ ! -w "$FILENAME_OUT" ]; then
-                        module_config_resume "$MODULE" && \
-                            log_error "error: no write permission, cannot resume final file ($FILENAME_OUT)" || \
+                        if module_config_resume "$MODULE"; then
+                            log_error "error: no write permission, cannot resume final file ($FILENAME_OUT)"
+                        else
                             log_error "error: no write permission, cannot overwrite final file ($FILENAME_OUT)"
+                        fi
                         return $ERR_SYSTEM
                     fi
 
@@ -515,9 +519,11 @@ download() {
                 if [ -f "$FILENAME_TMP" ]; then
                     # Can we overwrite temporary file?
                     if [ ! -w "$FILENAME_TMP" ]; then
-                        module_config_resume "$MODULE" && \
-                            log_error "error: no write permission, cannot resume tmp/part file ($FILENAME_TMP)" || \
+                        if module_config_resume "$MODULE"; then
+                            log_error "error: no write permission, cannot resume tmp/part file ($FILENAME_TMP)"
+                        else
                             log_error "error: no write permission, cannot overwrite tmp/part file ($FILENAME_TMP)"
+                        fi
                         return $ERR_SYSTEM
                     fi
 
@@ -648,11 +654,13 @@ download() {
 # %c: final cookie filename (with output directory)
 # %C: %c or empty string if module does not require it
 # %d: download (final) url
+# %D: download (final) url (JSON string)
 # %f: destination (local) filename
 # %F: destination (local) filename (with output directory)
 # %m: module name
 # %s: destination (local) file size (in bytes)
 # %u: download (source) url
+# %U: download url (JSON string)
 # and also:
 # %n: newline
 # %t: tabulation
@@ -664,7 +672,7 @@ download() {
 pretty_check() {
     # This must be non greedy!
     local S TOKEN
-    S=${1//%[cdfmsuCFnt%]}
+    S=${1//%[cdDfmsuUCFnt%]}
     TOKEN=$(parse_quiet . '\(%.\)' <<< "$S")
     if [ -n "$TOKEN" ]; then
         log_error "Bad format string: unknown sequence << $TOKEN >>"
@@ -720,7 +728,7 @@ pretty_print() {
 
     handle_tokens "$FMT" '%raw,%' '%t,	' "%n,$CR" \
         "%m,${A[0]}" "%f,${A[1]}" "%u,${A[4]}" "%d,${A[5]}" \
-        "%s,${A[6]}"
+        "%s,${A[6]}" "%U,$(json_escape "${A[4]}")" "%D,$(json_escape "${A[5]}")"
 }
 
 #
@@ -782,6 +790,12 @@ elif [ -z "$VERBOSE" ]; then
     declare -r VERBOSE=2
 fi
 
+if [ -n "$NO_COLOR" ]; then
+    unset COLOR
+else
+    declare -r COLOR=yes
+fi
+
 if [ $# -lt 1 ]; then
     log_error 'plowdown: no URL specified!'
     log_error "plowdown: try \`plowdown --help' for more information."
@@ -816,6 +830,8 @@ fi
 
 if [ -n "$PRINTF_FORMAT" ]; then
     pretty_check "$PRINTF_FORMAT" || exit
+elif [ -n "$SKIP_FINAL" -a -z "$POST_COMMAND" ]; then
+    log_notice 'plowdown: using --skip-final without --printf is probably not what you want'
 fi
 
 # Print chosen options
@@ -835,7 +851,13 @@ else
     [ -n "$CAPTCHA_DEATHBY" ] && log_debug 'plowdown: --deathbycaptcha selected'
 fi
 
-if [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
+if [ -n "$EXT_CURLRC" ]; then
+    if [ -n "$NO_CURLRC" ]; then
+        log_notice 'plowdown: --no-curlrc selected and prevails over --curlrc'
+    else
+        log_notice 'plowdown: using alternate curl configuration file'
+    fi
+elif [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
     log_debug 'using local ~/.curlrc'
 fi
 
@@ -893,9 +915,18 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
             log_notice "This seems to be a redirection url. Trying with: '$URL'"
         fi
 
+        # Sanity check
+        if [[ ${URL%/} =~ ^[Hh][Tt][Tt][Pp][Ss]?://(www\.)?[[:alnum:]]+\.[[:alpha:]]{2,3}$ ]]; then
+            log_notice 'You seem to have entered a basename link without any path/query. Please check if your link is valid.'
+            URL="${URL%/}/"
+            # Force error even if $MODULE detected
+            MRETVAL=$ERR_NOMODULE
+        fi
+
         MODULE=$(get_module "$URL" MODULES[@]) || true
 
         if [ -z "$MODULE" ]; then
+            MRETVAL=0
             if match_remote_url "$URL"; then
                 # Test for simple HTTP 30X redirection
                 # (disable User-Agent because some proxy can fake it)
@@ -941,8 +972,13 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
         fi
 
         if [ $MRETVAL -ne 0 ]; then
-            match_remote_url "$URL" && \
-                log_error "Skip: no module for URL ($(basename_url "$URL")/)"
+            if match_remote_url "$URL"; then
+                if [ -z "$MODULE" ]; then
+                    log_error "Skip: no module for URL ($(basename_url "$URL"))"
+                else
+                    log_error "Skip: invalid URL (${URL%/}) but module is supported ($MODULE)"
+                fi
+            fi
 
             # Check if plowlist can handle $URL
             if [[ ! $MODULES_LIST ]]; then
@@ -967,7 +1003,7 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
                 "${COMMAND_LINE_MODULE_OPTS[@]}")" || true
 
             [ "${#UNUSED_OPTS[@]}" -eq 0 ] || \
-                log_notice "$MODULE: unused command line switches: ${UNUSED_OPTS[@]}"
+                log_notice "$MODULE: unused command line switches: ${UNUSED_OPTS[*]}"
 
             # Module storage policy (part 1/2)
             if [ "$CACHE" = 'none' ]; then
@@ -1008,7 +1044,7 @@ if [ ${#RETVALS[@]} -eq 0 ]; then
 elif [ ${#RETVALS[@]} -eq 1 ]; then
     exit ${RETVALS[0]}
 else
-    log_debug "retvals:${RETVALS[@]}"
+    log_debug "retvals:${RETVALS[*]}"
     # Drop success values
     RETVALS=(${RETVALS[@]/#0*} -$ERR_FATAL_MULTIPLE)
 

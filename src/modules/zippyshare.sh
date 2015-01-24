@@ -1,5 +1,5 @@
 # Plowshare zippyshare.com module
-# Copyright (c) 2012-2014 Plowshare team
+# Copyright (c) 2012-2015 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -70,7 +70,7 @@ zippyshare_download() {
     local PAGE FILE_URL FILE_NAME PART_URL CONTENT JS FUNC N
 
     # JSESSIONID required
-    PAGE=$(curl -c "$COOKIE_FILE" -b 'ziplocale=en' "$URL") || return
+    PAGE=$(curl -L -c "$COOKIE_FILE" -b 'ziplocale=en' "$URL") || return
 
     # File does not exist on this server
     # File has expired and does not exist anymore on this server
@@ -141,30 +141,9 @@ zippyshare_download() {
             return $ERR_FATAL
     esac
 
-    JS=$(grep_script_by_order "$PAGE" $N) || return
-
-    # Sanity check 1
-    if match '<script[[:space:]][^>]\+></script>' "$JS"; then
-        log_error "Unexpected javascript content (N=$N)"
-        #JS=$(grep_script_by_order "$PAGE" $((N+1))) || return
-        #log_error "+1 [$JS]"
-        #JS=$(grep_script_by_order "$PAGE" $((N-1))) || return
-        #log_error "-1 [$JS]"
-        return $ERR_FATAL
-    fi
-
-    JS=$(delete_first_line <<< "$JS" | delete_last_line)
-
-    # Sanity check 2
-    if [ -z "$JS" ]; then
-        log_error "Unexpected error (N=$N)"
-        log_debug "js: '$(grep_script_by_order "$PAGE" $N)'"
-        return $ERR_FATAL
-    fi
-
-    # Find the function to call
-    # var somefunction = function() {somffunction()};
-    FUNC=$(parse_quiet 'var somefunction = ' '{\([^}]\+\)}' <<< "$PAGE")
+    JS=$(sed -n '/href="#"><img src/,${
+          /^<script type="text\/javascript">/,/^<\/script>/{/^</!p}
+          }' <<< "$PAGE")
 
     PART_URL=$(echo "var elts = new Array();
         var document = {
@@ -197,8 +176,10 @@ zippyshare_download() {
           };
         }
 
+        delete(java);
+        var EnvJs = true;
+
         $JS
-        $FUNC;
         print(elts['fimage'].href);" | javascript) || return
 
     FILE_URL="$(basename_url "$URL")$PART_URL"
