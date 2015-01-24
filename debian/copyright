@@ -7,26 +7,18 @@ Comment:
 
 Files: *
 Copyright: 2009-2010 Arnau Sanchez <tokland@gmail.com>
-           2010-2014 Plowshare team <mcrapet@gmail.com>
+           2010-2015 Plowshare team <mcrapet@gmail.com>
 License: GPL-3+
 
 Files: src/modules/dataport_cz.sh
-Copyright: 2011 Petr Pulpán <Pulpan3@gmail.com>
-           2012-2014 Plowshare team <mcrapet@gmail.com>
-License: GPL-3+
-
-Files: src/modules/1fichier.sh
+       src/modules/1fichier.sh
+       src/modules/euroshare_eu.sh
 Copyright: 2011 Petr Pulpán <Pulpan3@gmail.com>
            2012-2014 Plowshare team <mcrapet@gmail.com>
 License: GPL-3+
 
 Files: src/modules/billionuploads.sh
 Copyright: 2012-2013 Antoine Girard <sapk@sapk.fr>
-License: GPL-3+
-
-Files: src/modules/euroshare_eu.sh
-Copyright: 2011 Petr Pulpán <Pulpan3@gmail.com>
-           2012-2014 Plowshare team <mcrapet@gmail.com>
 License: GPL-3+
 
 Files: src/modules/oboom.sh
