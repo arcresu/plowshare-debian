@@ -1,0 +1,143 @@
+Description: Addresses some warnings from shellcheck
+Author: Carl Suster <carl@contraflo.ws>
+
+Index: plowshare4/tests/modules.sh
+===================================================================
+--- plowshare4.orig/tests/modules.sh
++++ plowshare4/tests/modules.sh
+@@ -63,7 +63,7 @@ status() {
+     local RET=$1
+     if [ "$FANCY_OUTPUT" -ne 0 ]; then
+         # based on /lib/lsb/init-functions
+-        RALIGN="\\r\\033[$[`tput cols`-6]C"
++        RALIGN="\\r\\033[$(($(tput cols)-6))C"
+         OFF=$(tput op)
+         if [ "$RET" -eq 0 ]; then
+             GREEN=$(tput setaf 2)
+@@ -389,7 +389,7 @@ shift $((OPTIND-1))
+ for ARG in "$@"; do
+     FOUND=0
+     for LETTER in ${TEST_LETTER[@]}; do
+-        ARG="`echo $ARG | tr '[:lower:]' '[:upper:]'`"
++      ARG="#(echo $ARG | tr '[:lower:]' '[:upper:]')"
+         if [ "${ARG:0:1}" = $LETTER ]; then
+             TEST_ITEMS=( "${TEST_ITEMS[@]}"  "$ARG" )
+             FOUND=1
+@@ -434,7 +434,7 @@ else
+     FILE1=$(create_temp_file "$NAME" 200k 1)
+ 
+     # Trap CTRL+C
+-    trap "{ rm ${NAME}*; exit 1; }" INT
++    trap '{ rm ${NAME}*; exit 1; }' INT
+ 
+     # Perform tests specified in TEST_ITEMS array
+     if [ ${#TEST_ITEMS[@]} -ne 0 ]; then
+Index: plowshare4/src/modules/4share_vn.sh
+===================================================================
+--- plowshare4.orig/src/modules/4share_vn.sh
++++ plowshare4/src/modules/4share_vn.sh
+@@ -74,9 +74,9 @@ MODULE_4SHARE_VN_PROBE_OPTIONS=""
+     { read WORD; read ID; } <<<"$WI"
+     rm -f "$CAPTCHA_IMG"
+ 
+-    TIME=$(($(date +%s) - $TIME))
++    TIME=$(($(date +%s) - TIME))
+     if [ $TIME -lt $WAIT_TIME ]; then
+-        WAIT_TIME=$((WAIT_TIME - $TIME))
++        WAIT_TIME=$((WAIT_TIME - TIME))
+         wait $WAIT_TIME || return
+     fi
+ 
+Index: plowshare4/src/modules/crocko.sh
+===================================================================
+--- plowshare4.orig/src/modules/crocko.sh
++++ plowshare4/src/modules/crocko.sh
+@@ -176,7 +176,7 @@ crocko_download() {
+         WAIT_TIME=$(parse "w='" "w='\([0-9]\+\)" <<< "$PAGE") || return
+         CAPTCHA_SCRIPT=$(parse "u='" "u='\([^']\+\)" <<< "$PAGE") || return
+ 
+-        if (( $WAIT_TIME > 300 )); then
++        if (( WAIT_TIME > 300 )); then
+             echo "$WAIT_TIME"
+             return $ERR_LINK_TEMP_UNAVAILABLE
+         fi
+Index: plowshare4/src/modules/filer_net.sh
+===================================================================
+--- plowshare4.orig/src/modules/filer_net.sh
++++ plowshare4/src/modules/filer_net.sh
+@@ -102,7 +102,7 @@ filer_net_download() {
+     TOKEN=$(echo "$PAGE" | parse 'token' 'value="\([[:alnum:]]\+\)') || return
+     log_debug "token: '$TOKEN'"
+     WAIT=$(parse_tag 'id=.time.>' em <<< "$PAGE")
+-    wait $(( $WAIT + 1 )) || return
++    wait $(( WAIT + 1 )) || return
+ 
+     # Push download button
+     PAGE=$(curl -b "$COOKIE_FILE" -d "token=$TOKEN" "$URL") || return
+Index: plowshare4/src/modules/hipfile.sh
+===================================================================
+--- plowshare4.orig/src/modules/hipfile.sh
++++ plowshare4/src/modules/hipfile.sh
+@@ -215,9 +215,9 @@ hipfile_download() {
+             local TIME
+             TIME=$(date +%s)
+             LINK_PASSWORD=$(prompt_for_password) || return
+-            TIME=$(($(date +%s) - $TIME))
++            TIME=$(($(date +%s) - TIME))
+             if [ $TIME -lt $WAIT_TIME ]; then
+-                WAIT_TIME=$((WAIT_TIME - $TIME))
++                WAIT_TIME=$((WAIT_TIME - TIME))
+             else
+                 unset WAIT_TIME
+             fi
+Index: plowshare4/src/modules/shareonline_biz.sh
+===================================================================
+--- plowshare4.orig/src/modules/shareonline_biz.sh
++++ plowshare4/src/modules/shareonline_biz.sh
+@@ -249,7 +249,7 @@ shareonline_biz_download() {
+     # Wait before send recaptcha data (and then again before actual download)
+     # 'var wait=30; [...] <current time> + wait/2'
+     WAIT=$(parse 'var wait' 'wait=\([[:digit:]]\+\)' <<< "$PAGE") || return
+-    wait $(( ($WAIT / 2) + 1 )) || return
++    wait $(( (WAIT / 2) + 1 )) || return
+ 
+     BASE64LINK=$(curl -b "$COOKIE_FILE" -d 'dl_free=1' \
+         -d "captcha=${CAP_ID:5}" \
+@@ -272,7 +272,7 @@ shareonline_biz_download() {
+     captcha_ack $ID
+     log_debug 'Correct captcha'
+ 
+-    wait $(( $WAIT + 1 )) || return
++    wait $(( WAIT + 1 )) || return
+ 
+     FILE_URL=$(base64 --decode <<< "$BASE64LINK") || return
+     echo "$FILE_URL"
+Index: plowshare4/src/modules/ultramegabit.sh
+===================================================================
+--- plowshare4.orig/src/modules/ultramegabit.sh
++++ plowshare4/src/modules/ultramegabit.sh
+@@ -101,9 +101,9 @@ ultramegabit_download() {
+     fi
+ 
+     if [ -n "$WAIT_TIME" ]; then
+-        TIME=$(($(date +%s) - $TIME))
++        TIME=$(($(date +%s) - TIME))
+         if [ $TIME -lt $WAIT_TIME ]; then
+-            WAIT_TIME=$((WAIT_TIME - $TIME))
++            WAIT_TIME=$((WAIT_TIME - TIME))
+             wait $WAIT_TIME || return
+         fi
+     fi
+Index: plowshare4/src/modules/uploadhero.sh
+===================================================================
+--- plowshare4.orig/src/modules/uploadhero.sh
++++ plowshare4/src/modules/uploadhero.sh
+@@ -142,7 +142,7 @@ uploadhero_download() {
+         LIMIT_HTML=$(curl "$BASE_URL$LIMIT_URL") || return
+         LIMIT_MIN=$(echo "$LIMIT_HTML" | parse_tag 'id="minutes"' span)
+         LIMIT_SEC=$(echo "$LIMIT_HTML" | parse_tag 'id="seconds"' span)
+-        WAIT_TIME=$(($LIMIT_MIN * 60 + $LIMIT_SEC + 1))
++        WAIT_TIME=$((LIMIT_MIN * 60 + LIMIT_SEC + 1))
+ 
+         log_error 'Forced delay between downloads.'
+         echo $WAIT_TIME
