@@ -1,6 +1,8 @@
 plowshare4 (1.2.0-1) experimental; urgency=medium
 
   * New upstream release.
+  * debian/bash_interpreter.patch:
+    - Adds #!/bin/bash comments to help checkbashisms
 
  -- Carl Suster <carl@contraflo.ws>  Sat, 24 Jan 2014 20:00:00 +1100
 

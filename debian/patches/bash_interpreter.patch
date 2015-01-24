@@ -1,0 +1,759 @@
+Description: Adds bash interpreter comments to help checkbashisms
+Author: Carl Suster <carl@contraflo.ws>
+
+Index: plowshare4/src/modules/oboom.sh
+===================================================================
+--- plowshare4.orig/src/modules/oboom.sh
++++ plowshare4/src/modules/oboom.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare oboom.com module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/bitshare.sh
+===================================================================
+--- plowshare4.orig/src/modules/bitshare.sh
++++ plowshare4/src/modules/bitshare.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare bitshare.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/filepup_net.sh
+===================================================================
+--- plowshare4.orig/src/modules/filepup_net.sh
++++ plowshare4/src/modules/filepup_net.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare filepup.net module
+ # Copyright (c) 2013-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/myvdrive.sh
+===================================================================
+--- plowshare4.orig/src/modules/myvdrive.sh
++++ plowshare4/src/modules/myvdrive.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare myvdrive.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/rghost.sh
+===================================================================
+--- plowshare4.orig/src/modules/rghost.sh
++++ plowshare4/src/modules/rghost.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare rghost.net module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/115.sh
+===================================================================
+--- plowshare4.orig/src/modules/115.sh
++++ plowshare4/src/modules/115.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare 115.com module
+ # Copyright (c) 2010-2012 Plowshare team
+ #
+Index: plowshare4/src/modules/180upload.sh
+===================================================================
+--- plowshare4.orig/src/modules/180upload.sh
++++ plowshare4/src/modules/180upload.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare 180upload.com module
+ # Copyright (c) 2012-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/1fichier.sh
+===================================================================
+--- plowshare4.orig/src/modules/1fichier.sh
++++ plowshare4/src/modules/1fichier.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare 1fichier.com module
+ # Copyright (c) 2011 halfman <Pulpan3@gmail.com>
+ # Copyright (c) 2012-2014 Plowshare team
+Index: plowshare4/src/modules/2shared.sh
+===================================================================
+--- plowshare4.orig/src/modules/2shared.sh
++++ plowshare4/src/modules/2shared.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare 2share.com module
+ # Copyright (c) 2010-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/4share_vn.sh
+===================================================================
+--- plowshare4.orig/src/modules/4share_vn.sh
++++ plowshare4/src/modules/4share_vn.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare 4share.vn module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/4shared.sh
+===================================================================
+--- plowshare4.orig/src/modules/4shared.sh
++++ plowshare4/src/modules/4shared.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare 4shared.com module
+ # Copyright (c) 2010-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/anonfiles.sh
+===================================================================
+--- plowshare4.orig/src/modules/anonfiles.sh
++++ plowshare4/src/modules/anonfiles.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare anonfiles.com module
+ # Copyright (c) 2012-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/bayfiles.sh
+===================================================================
+--- plowshare4.orig/src/modules/bayfiles.sh
++++ plowshare4/src/modules/bayfiles.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare bayfiles.net module
+ # Copyright (c) 2012-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/bayimg.sh
+===================================================================
+--- plowshare4.orig/src/modules/bayimg.sh
++++ plowshare4/src/modules/bayimg.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare bayimg.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/billionuploads.sh
+===================================================================
+--- plowshare4.orig/src/modules/billionuploads.sh
++++ plowshare4/src/modules/billionuploads.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare billionuploads.com module
+ # Copyright (c) 2012-2013 sapk <at> sapk.fr
+ #
+Index: plowshare4/src/modules/chomikuj.sh
+===================================================================
+--- plowshare4.orig/src/modules/chomikuj.sh
++++ plowshare4/src/modules/chomikuj.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare chomikuj.pl module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/cramit.sh
+===================================================================
+--- plowshare4.orig/src/modules/cramit.sh
++++ plowshare4/src/modules/cramit.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare cramit.in module
+ # Copyright (c) 2012-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/crocko.sh
+===================================================================
+--- plowshare4.orig/src/modules/crocko.sh
++++ plowshare4/src/modules/crocko.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare crocko.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/data_hu.sh
+===================================================================
+--- plowshare4.orig/src/modules/data_hu.sh
++++ plowshare4/src/modules/data_hu.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare data.hu module
+ # Copyright (c) 2010-2012 Plowshare team
+ #
+Index: plowshare4/src/modules/dataport_cz.sh
+===================================================================
+--- plowshare4.orig/src/modules/dataport_cz.sh
++++ plowshare4/src/modules/dataport_cz.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare dataport.cz module
+ # Copyright (c) 2011 halfman <Pulpan3@gmail.com>
+ # Copyright (c) 2012-2013 Plowshare team
+Index: plowshare4/src/modules/depositfiles.sh
+===================================================================
+--- plowshare4.orig/src/modules/depositfiles.sh
++++ plowshare4/src/modules/depositfiles.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare depositfiles.com module
+ # Copyright (c) 2010-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/directmirror.sh
+===================================================================
+--- plowshare4.orig/src/modules/directmirror.sh
++++ plowshare4/src/modules/directmirror.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare directmirror.com module
+ # Copyright (c) 2011-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/divshare.sh
+===================================================================
+--- plowshare4.orig/src/modules/divshare.sh
++++ plowshare4/src/modules/divshare.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare divshare.com module
+ # Copyright (c) 2010-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/dl_free_fr.sh
+===================================================================
+--- plowshare4.orig/src/modules/dl_free_fr.sh
++++ plowshare4/src/modules/dl_free_fr.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare dl.free.fr module
+ # Copyright (c) 2010-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/embedupload.sh
+===================================================================
+--- plowshare4.orig/src/modules/embedupload.sh
++++ plowshare4/src/modules/embedupload.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare embedupload.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/euroshare_eu.sh
+===================================================================
+--- plowshare4.orig/src/modules/euroshare_eu.sh
++++ plowshare4/src/modules/euroshare_eu.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare euroshare.eu module
+ # Copyright (c) 2011 halfman <Pulpan3@gmail.com>
+ # Copyright (c) 2012-2013 Plowshare team
+Index: plowshare4/src/modules/exoshare.sh
+===================================================================
+--- plowshare4.orig/src/modules/exoshare.sh
++++ plowshare4/src/modules/exoshare.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare exoshare.com module
+ # Copyright (c) 2011-2015 Plowshare team
+ #
+Index: plowshare4/src/modules/filebin_ca.sh
+===================================================================
+--- plowshare4.orig/src/modules/filebin_ca.sh
++++ plowshare4/src/modules/filebin_ca.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare filebin.ca module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/filecloud.sh
+===================================================================
+--- plowshare4.orig/src/modules/filecloud.sh
++++ plowshare4/src/modules/filecloud.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare filecloud.io module
+ # Copyright (c) 2013-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/filecore.sh
+===================================================================
+--- plowshare4.orig/src/modules/filecore.sh
++++ plowshare4/src/modules/filecore.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # filecore.co.nz module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/filefactory.sh
+===================================================================
+--- plowshare4.orig/src/modules/filefactory.sh
++++ plowshare4/src/modules/filefactory.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare filefactory.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/filemonkey.sh
+===================================================================
+--- plowshare4.orig/src/modules/filemonkey.sh
++++ plowshare4/src/modules/filemonkey.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare filemonkey.in module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/fileover.sh
+===================================================================
+--- plowshare4.orig/src/modules/fileover.sh
++++ plowshare4/src/modules/fileover.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare fileover.net module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/fileparadox.sh
+===================================================================
+--- plowshare4.orig/src/modules/fileparadox.sh
++++ plowshare4/src/modules/fileparadox.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare fileparadox.in module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/filepost.sh
+===================================================================
+--- plowshare4.orig/src/modules/filepost.sh
++++ plowshare4/src/modules/filepost.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare filepost.com module
+ # Copyright (c) 2012 Plowshare team
+ #
+Index: plowshare4/src/modules/filer_net.sh
+===================================================================
+--- plowshare4.orig/src/modules/filer_net.sh
++++ plowshare4/src/modules/filer_net.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare filer.net module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/firedrive.sh
+===================================================================
+--- plowshare4.orig/src/modules/firedrive.sh
++++ plowshare4/src/modules/firedrive.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare firedrive.com module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/flashx.sh
+===================================================================
+--- plowshare4.orig/src/modules/flashx.sh
++++ plowshare4/src/modules/flashx.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare flashx.tv module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/freakshare.sh
+===================================================================
+--- plowshare4.orig/src/modules/freakshare.sh
++++ plowshare4/src/modules/freakshare.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare freakshare.com module
+ # Copyright (c) 2012-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/fshare_vn.sh
+===================================================================
+--- plowshare4.orig/src/modules/fshare_vn.sh
++++ plowshare4/src/modules/fshare_vn.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare fshare.vn module
+ # Copyright (c) 2013-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/gamefront.sh
+===================================================================
+--- plowshare4.orig/src/modules/gamefront.sh
++++ plowshare4/src/modules/gamefront.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare gamefront.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/ge_tt.sh
+===================================================================
+--- plowshare4.orig/src/modules/ge_tt.sh
++++ plowshare4/src/modules/ge_tt.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare ge.tt module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/gfile_ru.sh
+===================================================================
+--- plowshare4.orig/src/modules/gfile_ru.sh
++++ plowshare4/src/modules/gfile_ru.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare gfile.ru module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/go4up.sh
+===================================================================
+--- plowshare4.orig/src/modules/go4up.sh
++++ plowshare4/src/modules/go4up.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare go4up.com module
+ # Copyright (c) 2012-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/hdstream_to.sh
+===================================================================
+--- plowshare4.orig/src/modules/hdstream_to.sh
++++ plowshare4/src/modules/hdstream_to.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare hdstream.to module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/hipfile.sh
+===================================================================
+--- plowshare4.orig/src/modules/hipfile.sh
++++ plowshare4/src/modules/hipfile.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare hipfile.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/jheberg.sh
+===================================================================
+--- plowshare4.orig/src/modules/jheberg.sh
++++ plowshare4/src/modules/jheberg.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare jheberg.net module
+ # Copyright (c) 2012-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/keep2share.sh
+===================================================================
+--- plowshare4.orig/src/modules/keep2share.sh
++++ plowshare4/src/modules/keep2share.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare keep2share.cc module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/letitbit.sh
+===================================================================
+--- plowshare4.orig/src/modules/letitbit.sh
++++ plowshare4/src/modules/letitbit.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare letitbit module
+ # Copyright (c) 2012-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/mediafire.sh
+===================================================================
+--- plowshare4.orig/src/modules/mediafire.sh
++++ plowshare4/src/modules/mediafire.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare mediafire.com module
+ # Copyright (c) 2011-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/megashares.sh
+===================================================================
+--- plowshare4.orig/src/modules/megashares.sh
++++ plowshare4/src/modules/megashares.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare megashares.com module
+ # Copyright (c) 2011-2012 Plowshare team
+ #
+Index: plowshare4/src/modules/mirrorcreator.sh
+===================================================================
+--- plowshare4.orig/src/modules/mirrorcreator.sh
++++ plowshare4/src/modules/mirrorcreator.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare mirrorcreator.com module
+ # Copyright (c) 2011-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/mirrorupload.sh
+===================================================================
+--- plowshare4.orig/src/modules/mirrorupload.sh
++++ plowshare4/src/modules/mirrorupload.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare mirrorupload.net module
+ # Copyright (c) 2011-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/multiup_org.sh
+===================================================================
+--- plowshare4.orig/src/modules/multiup_org.sh
++++ plowshare4/src/modules/multiup_org.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare multiup.org module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/multiupload.sh
+===================================================================
+--- plowshare4.orig/src/modules/multiupload.sh
++++ plowshare4/src/modules/multiupload.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare multiupload.nl module
+ # Copyright (c) 2012-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/nakido.sh
+===================================================================
+--- plowshare4.orig/src/modules/nakido.sh
++++ plowshare4/src/modules/nakido.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare nakido.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/netkups.sh
+===================================================================
+--- plowshare4.orig/src/modules/netkups.sh
++++ plowshare4/src/modules/netkups.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare netkups.com module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/netload_in.sh
+===================================================================
+--- plowshare4.orig/src/modules/netload_in.sh
++++ plowshare4/src/modules/netload_in.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare netload.in module
+ # Copyright (c) 2010-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/nowdownload_co.sh
+===================================================================
+--- plowshare4.orig/src/modules/nowdownload_co.sh
++++ plowshare4/src/modules/nowdownload_co.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare nowdownload.co module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/pastebin.sh
+===================================================================
+--- plowshare4.orig/src/modules/pastebin.sh
++++ plowshare4/src/modules/pastebin.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare pastebin.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/promptfile.sh
+===================================================================
+--- plowshare4.orig/src/modules/promptfile.sh
++++ plowshare4/src/modules/promptfile.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare promptfile.com module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/rapidgator.sh
+===================================================================
+--- plowshare4.orig/src/modules/rapidgator.sh
++++ plowshare4/src/modules/rapidgator.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare rapidgator.net module
+ # Copyright (c) 2012-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/rapidshare.sh
+===================================================================
+--- plowshare4.orig/src/modules/rapidshare.sh
++++ plowshare4/src/modules/rapidshare.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare rapidshare.com module
+ # Copyright (c) 2010-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/ryushare.sh
+===================================================================
+--- plowshare4.orig/src/modules/ryushare.sh
++++ plowshare4/src/modules/ryushare.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare ryushare.com module
+ # Copyright (c) 2012 Plowshare team
+ #
+Index: plowshare4/src/modules/sendspace.sh
+===================================================================
+--- plowshare4.orig/src/modules/sendspace.sh
++++ plowshare4/src/modules/sendspace.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare sendspace.com module
+ # Copyright (c) 2010-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/sharebeast.sh
+===================================================================
+--- plowshare4.orig/src/modules/sharebeast.sh
++++ plowshare4/src/modules/sharebeast.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare sharebeast.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/shareonline_biz.sh
+===================================================================
+--- plowshare4.orig/src/modules/shareonline_biz.sh
++++ plowshare4/src/modules/shareonline_biz.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare shareonline.biz module
+ # Copyright (c) 2012-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/sockshare.sh
+===================================================================
+--- plowshare4.orig/src/modules/sockshare.sh
++++ plowshare4/src/modules/sockshare.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare sockshare.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/solidfiles.sh
+===================================================================
+--- plowshare4.orig/src/modules/solidfiles.sh
++++ plowshare4/src/modules/solidfiles.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare solidfiles.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/tempsend.sh
+===================================================================
+--- plowshare4.orig/src/modules/tempsend.sh
++++ plowshare4/src/modules/tempsend.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare tempsend.com module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/thefilebay.sh
+===================================================================
+--- plowshare4.orig/src/modules/thefilebay.sh
++++ plowshare4/src/modules/thefilebay.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare thefilebay.com module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/turbobit.sh
+===================================================================
+--- plowshare4.orig/src/modules/turbobit.sh
++++ plowshare4/src/modules/turbobit.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare turbobit.net module
+ # Copyright (c) 2012-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/ultramegabit.sh
+===================================================================
+--- plowshare4.orig/src/modules/ultramegabit.sh
++++ plowshare4/src/modules/ultramegabit.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare ultramegabit.com module
+ # Copyright (c) 2013 Plowshare team
+ #
+Index: plowshare4/src/modules/uploadable_ch.sh
+===================================================================
+--- plowshare4.orig/src/modules/uploadable_ch.sh
++++ plowshare4/src/modules/uploadable_ch.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare uploadable.ch module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/uploaded_net.sh
+===================================================================
+--- plowshare4.orig/src/modules/uploaded_net.sh
++++ plowshare4/src/modules/uploaded_net.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare uploaded.net module
+ # Copyright (c) 2011-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/uploadhero.sh
+===================================================================
+--- plowshare4.orig/src/modules/uploadhero.sh
++++ plowshare4/src/modules/uploadhero.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare uploadhero.co module
+ # Copyright (c) 2012-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/uploading.sh
+===================================================================
+--- plowshare4.orig/src/modules/uploading.sh
++++ plowshare4/src/modules/uploading.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare uploading.com module
+ # Copyright (c) 2010-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/upstore.sh
+===================================================================
+--- plowshare4.orig/src/modules/upstore.sh
++++ plowshare4/src/modules/upstore.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare upstore module
+ # Copyright (c) 2013-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/uptobox.sh
+===================================================================
+--- plowshare4.orig/src/modules/uptobox.sh
++++ plowshare4/src/modules/uptobox.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare uptobox.com module
+ # Copyright (c) 2012-2014 Plowshare team
+ #
+Index: plowshare4/src/modules/vidzi_tv.sh
+===================================================================
+--- plowshare4.orig/src/modules/vidzi_tv.sh
++++ plowshare4/src/modules/vidzi_tv.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare Vidzi.Tv module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/yourvideohost.sh
+===================================================================
+--- plowshare4.orig/src/modules/yourvideohost.sh
++++ plowshare4/src/modules/yourvideohost.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare yourvideohost.com module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/zalaa.sh
+===================================================================
+--- plowshare4.orig/src/modules/zalaa.sh
++++ plowshare4/src/modules/zalaa.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare zalaa.com module
+ # Copyright (c) 2012-2013 Plowshare team
+ #
+Index: plowshare4/src/modules/ziddu.sh
+===================================================================
+--- plowshare4.orig/src/modules/ziddu.sh
++++ plowshare4/src/modules/ziddu.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare ziddu.com module
+ # Copyright (c) 2014 Plowshare team
+ #
+Index: plowshare4/src/modules/zippyshare.sh
+===================================================================
+--- plowshare4.orig/src/modules/zippyshare.sh
++++ plowshare4/src/modules/zippyshare.sh
+@@ -1,3 +1,4 @@
++#!/bin/bash
+ # Plowshare zippyshare.com module
+ # Copyright (c) 2012-2015 Plowshare team
+ #
