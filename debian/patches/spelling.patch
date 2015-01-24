@@ -31,7 +31,7 @@ Index: plowshare4/src/modules/bitshare.sh
 ===================================================================
 --- plowshare4.orig/src/modules/bitshare.sh
 +++ plowshare4/src/modules/bitshare.sh
-@@ -95,7 +95,7 @@ bitshare_download() {
+@@ -94,7 +94,7 @@ bitshare_download() {
          echo $((WAIT))
          return $ERR_LINK_TEMP_UNAVAILABLE
  
@@ -44,7 +44,7 @@ Index: plowshare4/src/modules/sendspace.sh
 ===================================================================
 --- plowshare4.orig/src/modules/sendspace.sh
 +++ plowshare4/src/modules/sendspace.sh
-@@ -175,7 +175,7 @@ sendspace_delete() {
+@@ -174,7 +174,7 @@ sendspace_delete() {
  
      PAGE=$(curl "$URL") || return
  

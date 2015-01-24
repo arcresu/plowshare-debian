@@ -36,7 +36,7 @@ Index: plowshare4/src/modules/4share_vn.sh
 ===================================================================
 --- plowshare4.orig/src/modules/4share_vn.sh
 +++ plowshare4/src/modules/4share_vn.sh
-@@ -74,9 +74,9 @@ MODULE_4SHARE_VN_PROBE_OPTIONS=""
+@@ -73,9 +73,9 @@ MODULE_4SHARE_VN_PROBE_OPTIONS=""
      { read WORD; read ID; } <<<"$WI"
      rm -f "$CAPTCHA_IMG"
  
@@ -52,7 +52,7 @@ Index: plowshare4/src/modules/crocko.sh
 ===================================================================
 --- plowshare4.orig/src/modules/crocko.sh
 +++ plowshare4/src/modules/crocko.sh
-@@ -176,7 +176,7 @@ crocko_download() {
+@@ -175,7 +175,7 @@ crocko_download() {
          WAIT_TIME=$(parse "w='" "w='\([0-9]\+\)" <<< "$PAGE") || return
          CAPTCHA_SCRIPT=$(parse "u='" "u='\([^']\+\)" <<< "$PAGE") || return
  
@@ -65,7 +65,7 @@ Index: plowshare4/src/modules/filer_net.sh
 ===================================================================
 --- plowshare4.orig/src/modules/filer_net.sh
 +++ plowshare4/src/modules/filer_net.sh
-@@ -102,7 +102,7 @@ filer_net_download() {
+@@ -101,7 +101,7 @@ filer_net_download() {
      TOKEN=$(echo "$PAGE" | parse 'token' 'value="\([[:alnum:]]\+\)') || return
      log_debug "token: '$TOKEN'"
      WAIT=$(parse_tag 'id=.time.>' em <<< "$PAGE")
@@ -78,7 +78,7 @@ Index: plowshare4/src/modules/hipfile.sh
 ===================================================================
 --- plowshare4.orig/src/modules/hipfile.sh
 +++ plowshare4/src/modules/hipfile.sh
-@@ -215,9 +215,9 @@ hipfile_download() {
+@@ -214,9 +214,9 @@ hipfile_download() {
              local TIME
              TIME=$(date +%s)
              LINK_PASSWORD=$(prompt_for_password) || return
@@ -94,7 +94,7 @@ Index: plowshare4/src/modules/shareonline_biz.sh
 ===================================================================
 --- plowshare4.orig/src/modules/shareonline_biz.sh
 +++ plowshare4/src/modules/shareonline_biz.sh
-@@ -249,7 +249,7 @@ shareonline_biz_download() {
+@@ -248,7 +248,7 @@ shareonline_biz_download() {
      # Wait before send recaptcha data (and then again before actual download)
      # 'var wait=30; [...] <current time> + wait/2'
      WAIT=$(parse 'var wait' 'wait=\([[:digit:]]\+\)' <<< "$PAGE") || return
@@ -103,7 +103,7 @@ Index: plowshare4/src/modules/shareonline_biz.sh
  
      BASE64LINK=$(curl -b "$COOKIE_FILE" -d 'dl_free=1' \
          -d "captcha=${CAP_ID:5}" \
-@@ -272,7 +272,7 @@ shareonline_biz_download() {
+@@ -271,7 +271,7 @@ shareonline_biz_download() {
      captcha_ack $ID
      log_debug 'Correct captcha'
  
@@ -116,7 +116,7 @@ Index: plowshare4/src/modules/ultramegabit.sh
 ===================================================================
 --- plowshare4.orig/src/modules/ultramegabit.sh
 +++ plowshare4/src/modules/ultramegabit.sh
-@@ -101,9 +101,9 @@ ultramegabit_download() {
+@@ -100,9 +100,9 @@ ultramegabit_download() {
      fi
  
      if [ -n "$WAIT_TIME" ]; then
@@ -132,7 +132,7 @@ Index: plowshare4/src/modules/uploadhero.sh
 ===================================================================
 --- plowshare4.orig/src/modules/uploadhero.sh
 +++ plowshare4/src/modules/uploadhero.sh
-@@ -142,7 +142,7 @@ uploadhero_download() {
+@@ -141,7 +141,7 @@ uploadhero_download() {
          LIMIT_HTML=$(curl "$BASE_URL$LIMIT_URL") || return
          LIMIT_MIN=$(echo "$LIMIT_HTML" | parse_tag 'id="minutes"' span)
          LIMIT_SEC=$(echo "$LIMIT_HTML" | parse_tag 'id="seconds"' span)

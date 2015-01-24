@@ -2,9 +2,11 @@ Description: Fixes several minor typos in shell script comments
 Author: Carl Suster <carl@contraflo.ws>
 Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
 
---- a/src/core.sh
-+++ b/src/core.sh
-@@ -2577,7 +2577,7 @@
+Index: plowshare4/src/core.sh
+===================================================================
+--- plowshare4.orig/src/core.sh
++++ plowshare4/src/core.sh
+@@ -2577,7 +2577,7 @@ set_exit_trap() {
      trap exit_handler EXIT
  }
  
@@ -13,9 +15,11 @@ Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
  # Better than "which" (external) executable
  #
  # $1: Executable to check
---- a/src/download.sh
-+++ b/src/download.sh
-@@ -884,7 +884,7 @@
+Index: plowshare4/src/download.sh
+===================================================================
+--- plowshare4.orig/src/download.sh
++++ plowshare4/src/download.sh
+@@ -884,7 +884,7 @@ declare -r UMASK=$(umask)
  test "$UMASK" && umask 0066
  
  # Remember last host because hosters may require waiting between
@@ -24,9 +28,11 @@ Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
  PREVIOUS_HOST=none
  
  # Only used when CACHE policy is session (default).
---- a/src/modules/filemonkey.sh
-+++ b/src/modules/filemonkey.sh
-@@ -90,7 +90,7 @@
+Index: plowshare4/src/modules/filemonkey.sh
+===================================================================
+--- plowshare4.orig/src/modules/filemonkey.sh
++++ plowshare4/src/modules/filemonkey.sh
+@@ -90,7 +90,7 @@ filemonkey_upload() {
                      "$BASE_URL/manage") || return
  
                  if [ -z "$PAGE" ]; then
@@ -35,9 +41,11 @@ Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
                      return $ERR_FATAL
                  fi
  
---- a/src/modules/freakshare.sh
-+++ b/src/modules/freakshare.sh
-@@ -132,7 +132,7 @@
+Index: plowshare4/src/modules/freakshare.sh
+===================================================================
+--- plowshare4.orig/src/modules/freakshare.sh
++++ plowshare4/src/modules/freakshare.sh
+@@ -132,7 +132,7 @@ freakshare_download() {
          captcha_ack $ID
          log_debug 'correct captcha'
  
@@ -46,9 +54,11 @@ Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
          if match 'download more then.*files at time.' "$PAGE"; then
              log_error 'No parallel download allowed'
              echo 120
---- a/src/modules/ge_tt.sh
-+++ b/src/modules/ge_tt.sh
-@@ -190,7 +190,7 @@
+Index: plowshare4/src/modules/ge_tt.sh
+===================================================================
+--- plowshare4.orig/src/modules/ge_tt.sh
++++ plowshare4/src/modules/ge_tt.sh
+@@ -190,7 +190,7 @@ ge_tt_upload() {
              return $ERR_FATAL
          fi
  
@@ -57,9 +67,11 @@ Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
          wait 1 || return
      done
  
---- a/src/modules/hipfile.sh
-+++ b/src/modules/hipfile.sh
-@@ -356,7 +356,7 @@
+Index: plowshare4/src/modules/hipfile.sh
+===================================================================
+--- plowshare4.orig/src/modules/hipfile.sh
++++ plowshare4/src/modules/hipfile.sh
+@@ -356,7 +356,7 @@ hipfile_upload() {
      log_debug "State: '$STATE'"
  
      if [ "$STATE" = 'OK' ]; then
@@ -68,9 +80,11 @@ Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
      elif [ "$STATE" = 'unallowed extension' ]; then
          log_error 'File extension is forbidden.'
          return $ERR_FATAL
---- a/src/modules/ryushare.sh
-+++ b/src/modules/ryushare.sh
-@@ -83,7 +83,7 @@
+Index: plowshare4/src/modules/ryushare.sh
+===================================================================
+--- plowshare4.orig/src/modules/ryushare.sh
++++ plowshare4/src/modules/ryushare.sh
+@@ -83,7 +83,7 @@ ryushare_download() {
      PAGE=$(curl -c "$COOKIE_FILE" -b "$COOKIE_FILE" -b 'lang=english' "$URL") || return
  
      # The file you were looking for could not be found, sorry for any inconvenience

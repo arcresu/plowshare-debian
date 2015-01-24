@@ -2,9 +2,11 @@ Description: Repairs a UTF-8 encoding issue.
 Author: Carl Suster <carl@contraflo.ws>
 Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
 
---- a/src/modules/dl_free_fr.sh
-+++ b/src/modules/dl_free_fr.sh
-@@ -67,7 +67,7 @@
+Index: plowshare4/src/modules/dl_free_fr.sh
+===================================================================
+--- plowshare4.orig/src/modules/dl_free_fr.sh
++++ plowshare4/src/modules/dl_free_fr.sh
+@@ -67,7 +67,7 @@ captcha_ayl_process() {
          log_debug "Adyoulike type: '$TYPE'"
  
          # Easy case, captcha answer is written plain text :)
@@ -13,7 +15,7 @@ Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
          if [ $TYPE = 'image/adyoulike' ]; then
              if [ -z "$WORDS" ]; then
                  log_error "$FUNCNAME: instructions_visual empty, skipping"
-@@ -264,7 +264,7 @@
+@@ -264,7 +264,7 @@ dl_free_fr_upload() {
          elif match 'Erreur de traitement...' "$PAGE"; then
              log_error 'process failed, you may try again'
              break
@@ -22,7 +24,7 @@ Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
          elif match 'Le fichier sera accessible' "$PAGE"; then
              DL_URL=$(echo "$PAGE" | parse 'en ligne' \
                  "window\.open('\(http://dl.free.fr/[^?]*\)')" | html_to_utf8)
-@@ -294,16 +294,16 @@
+@@ -294,16 +294,16 @@ dl_free_fr_delete() {
  
      PAGE=$(curl "$URL") || return
  
