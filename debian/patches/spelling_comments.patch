@@ -1,5 +1,6 @@
 Description: Fixes several minor typos in shell script comments
 Author: Carl Suster <carl@contraflo.ws>
+Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
 
 --- a/src/core.sh
 +++ b/src/core.sh

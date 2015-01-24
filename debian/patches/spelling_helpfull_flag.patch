@@ -3,6 +3,7 @@ Description: Fixes spelling error in a CLI flag
   HELPFULL to HELPFUL. Since this is just a help flag, it is unlikely that
   this change will break anything.
 Author: Carl Suster <carl@contraflo.ws>
+Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
 
 --- a/src/delete.sh
 +++ b/src/delete.sh

@@ -1,5 +1,6 @@
 Description: Repairs a UTF-8 encoding issue.
 Author: Carl Suster <carl@contraflo.ws>
+Forwarded: https://code.google.com/p/plowshare/issues/detail?id=1265
 
 --- a/src/modules/dl_free_fr.sh
 +++ b/src/modules/dl_free_fr.sh
