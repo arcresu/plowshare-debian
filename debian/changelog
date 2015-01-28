@@ -7,6 +7,11 @@ plowshare4 (1.2.0-1) experimental; urgency=medium
     - Addresses some warnings from shellcheck
   * debian/supported_sites:
     - Outputs list of sites for copying into debian/control
+  * debian/copyright:
+    - Update packaging and default copyright to include 2015
+  * debian/control:
+    - List supported sites using above script rather than manually
+    - Update long description to highlight existing features
 
  -- Carl Suster <carl@contraflo.ws>  Sat, 24 Jan 2015 20:00:00 +1100
 
