@@ -12,6 +12,8 @@ plowshare4 (2.0.1-1) experimental; urgency=medium
     - Point to new official source code location
   * debian/control:
     - Update description and homepage to reflect upstream reorganisation
+  * debian/watch:
+    - Update to scan releases on GitHub
 
  -- Carl Suster <carl@contraflo.ws>  Sat, 4 Apr 2015 13:00:00 +1100
 
