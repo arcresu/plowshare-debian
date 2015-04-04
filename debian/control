@@ -6,7 +6,7 @@ Build-Depends:
  bash-completion,
  debhelper (>= 9)
 Standards-Version: 3.9.6
-Homepage: http://code.google.com/p/plowshare/
+Homepage: https://github.com/mcrapet/plowshare
 Vcs-Git: git://github.com/arcresu/plowshare4-debian.git -b debian/unstable
 Vcs-Browser: https://github.com/arcresu/plowshare4-debian
 
@@ -23,9 +23,10 @@ Suggests:
  aview | caca-utils,
  fbi
 Description: Download and upload files from file sharing websites
- Plowshare is a command-line tool for managing files on popular file sharing
- websites (a.k.a. file hosting providers or one-click hosters). Plowshare
- can interact with supported site via a uniform interface to perform such
- tasks as downloading or uploading files, managing remote folders and
- deleting links. It additionally supports several CAPTCHA services, and
- provides an API for writing scripts for more complicated tasks.
+ Plowshare is a framework for interacting with file sharing websites, providing
+ an API to perform tasks like uploading and downloading files, and displaying
+ CAPTCHAs to solve or sending them to CAPTCHA web services.
+ .
+ This package does not contain any of the drivers (called 'modules') for
+ specific file sharing websites, which must be installed separately due to
+ their dependence on often undocumented and rapidly changing external APIs.

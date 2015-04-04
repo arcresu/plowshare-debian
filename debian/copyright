@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: plowshare4
 Upstream-Contact: Matthieu Crapet <mcrapet@gmail.com>
-Source: https://code.google.com/p/plowshare/
+Source: https://github.com/mcrapet/plowshare
 Comment:
  Please see AUTHORS for a list of contributors to the plowshare project.
 

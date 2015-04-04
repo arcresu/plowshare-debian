@@ -5,6 +5,8 @@ plowshare4 (2.0.1-1) experimental; urgency=medium
     - Removed patches which are fixed upstream
   * patches/*:
     - Removed patches made irrelevant due to underlying changes in the code
+  * All modules are removed and are now to be installed separately in the
+    home directory due to a change in upstream organisation
 
  -- Carl Suster <carl@contraflo.ws>  Sat, 4 Apr 2015 13:00:00 +1100
 
