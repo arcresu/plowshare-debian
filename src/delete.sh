@@ -22,7 +22,7 @@ declare -r VERSION='GIT-snapshot'
 
 declare -r EARLY_OPTIONS="
 HELP,h,help,,Show help info and exit
-HELPFULL,H,longhelp,,Exhaustive help info (with modules command-line options)
+HELPFUL,H,longhelp,,Exhaustive help info (with modules command-line options)
 GETVERSION,,version,,Output plowdel version information and exit
 ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
 EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
@@ -90,15 +90,18 @@ TMPDIR=${TMPDIR:-/tmp}
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-mapfile -t MODULES < <(get_all_modules_list "$LIBDIR" 'delete') || exit
-for MODULE in "${MODULES[@]}"; do
-    source "$LIBDIR/modules/$MODULE.sh"
+
+declare -a MODULES=()
+eval "$(get_all_modules_list delete)" || exit
+for MODULE in "${!MODULES_PATH[@]}"; do
+    source "${MODULES_PATH[$MODULE]}"
+    MODULES+=("$MODULE")
 done
 
 # Process command-line (plowdel early options)
 eval "$(process_core_options 'plowdel' "$EARLY_OPTIONS" "$@")" || exit
 
-test "$HELPFULL" && { usage 1; exit 0; }
+test "$HELPFUL" && { usage 1; exit 0; }
 test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 

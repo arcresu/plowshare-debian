@@ -22,7 +22,7 @@ declare -r VERSION='GIT-snapshot'
 
 declare -r EARLY_OPTIONS="
 HELP,h,help,,Show help info and exit
-HELPFULL,H,longhelp,,Exhaustive help info (with modules command-line options)
+HELPFUL,H,longhelp,,Exhaustive help info (with modules command-line options)
 GETVERSION,,version,,Output plowdown version information and exit
 ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
 EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
@@ -52,7 +52,7 @@ CAPTCHA_DEATHBY,,deathbycaptcha,a=USER:PASSWD,DeathByCaptcha account
 PRE_COMMAND,,run-before,F=PROGRAM,Call external program/script before new link processing
 POST_COMMAND,,run-after,F=PROGRAM,Call external program/script after link being successfully processed
 SKIP_FINAL,,skip-final,,Don't process final link (returned by module), just skip it (for each link)
-PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful download). Default string is: \"%F%n\".
+PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful download). Default is \"%F%n\".
 NO_COLOR,,no-color,,Disables log notice & log error output coloring
 NO_MODULE_FALLBACK,,fallback,,If no module is found for link, simply download it (HTTP GET)
 EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
@@ -755,15 +755,18 @@ TMPDIR=${TMPDIR:-/tmp}
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-mapfile -t MODULES < <(get_all_modules_list "$LIBDIR" 'download') || exit
-for MODULE in "${MODULES[@]}"; do
-    source "$LIBDIR/modules/$MODULE.sh"
+
+declare -a MODULES=()
+eval "$(get_all_modules_list download)" || exit
+for MODULE in "${!MODULES_PATH[@]}"; do
+    source "${MODULES_PATH[$MODULE]}"
+    MODULES+=("$MODULE")
 done
 
 # Process command-line (plowdown early options)
 eval "$(process_core_options 'plowdown' "$EARLY_OPTIONS" "$@")" || exit
 
-test "$HELPFULL" && { usage 1; exit 0; }
+test "$HELPFUL" && { usage 1; exit 0; }
 test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
@@ -794,6 +797,19 @@ if [ -n "$NO_COLOR" ]; then
     unset COLOR
 else
     declare -r COLOR=yes
+fi
+
+if [ "${#MODULES}" -le 0 ]; then
+    log_error \
+"-------------------------------------------------------------------------------
+You plowshare installation has currently no module
+('$LIBDIR/modules' is empty).
+
+In order to use plowdown you must install some modules:
+$ mkdir -p $PLOWSHARE_CONFDIR
+$ cd $PLOWSHARE_CONFDIR
+$ git clone https://code.google.com/p/plowshare.modules-unmaintained/ modules
+-------------------------------------------------------------------------------"
 fi
 
 if [ $# -lt 1 ]; then
@@ -884,7 +900,7 @@ declare -r UMASK=$(umask)
 test "$UMASK" && umask 0066
 
 # Remember last host because hosters may require waiting between
-# sucessive downloads.
+# successive downloads.
 PREVIOUS_HOST=none
 
 # Only used when CACHE policy is session (default).
@@ -981,13 +997,15 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
             fi
 
             # Check if plowlist can handle $URL
-            if [[ ! $MODULES_LIST ]]; then
-                mapfile -t MODULES_LIST < <(get_all_modules_list "$LIBDIR" 'list' 'download') || true
-                for MODULE in "${MODULES_LIST[@]}"; do
-                    source "$LIBDIR/modules/$MODULE.sh"
+            if [[ ! $MODULES2 ]]; then
+                declare -a MODULES2=()
+                eval "$(get_all_modules_list list download)" || exit
+                for MODULE in "${!MODULES_PATH[@]}"; do
+                    source "${MODULES_PATH[$MODULE]}"
+                    MODULES2+=("$MODULE")
                 done
             fi
-            MODULE=$(get_module "$URL" MODULES_LIST[@]) || true
+            MODULE=$(get_module "$URL" MODULES2[@]) || true
             if [ -n "$MODULE" ]; then
                 log_notice "Note: This URL ($MODULE) is supported by plowlist"
             fi

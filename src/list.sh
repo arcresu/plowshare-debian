@@ -22,7 +22,7 @@ declare -r VERSION='GIT-snapshot'
 
 declare -r EARLY_OPTIONS="
 HELP,h,help,,Show help info and exit
-HELPFULL,H,longhelp,,Exhaustive help info (with modules command-line options)
+HELPFUL,H,longhelp,,Exhaustive help info (with modules command-line options)
 GETVERSION,,version,,Output plowlist version information and exit
 ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
 EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
@@ -33,7 +33,7 @@ VERBOSE,v,verbose,c|0|1|2|3|4=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (de
 QUIET,q,quiet,,Alias for -v0
 INTERFACE,i,interface,s=IFACE,Force IFACE network interface
 RECURSE,R,recursive,,Recurse into sub folders
-PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each link). Default string is: \"%F%u%n\".
+PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each link). Default is \"%F%u%n\".
 NO_COLOR,,no-color,,Disables log notice & log error output coloring
 NO_MODULE_FALLBACK,,fallback,,If no module is found for link, simply list all URLs contained in page
 EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
@@ -175,15 +175,18 @@ TMPDIR=${TMPDIR:-/tmp}
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-mapfile -t MODULES < <(get_all_modules_list "$LIBDIR" 'list') || exit
-for MODULE in "${MODULES[@]}"; do
-    source "$LIBDIR/modules/$MODULE.sh"
+
+declare -a MODULES=()
+eval "$(get_all_modules_list list)" || exit
+for MODULE in "${!MODULES_PATH[@]}"; do
+    source "${MODULES_PATH[$MODULE]}"
+    MODULES+=("$MODULE")
 done
 
 # Process command-line (plowlist early options)
 eval "$(process_core_options 'plowlist' "$EARLY_OPTIONS" "$@")" || exit
 
-test "$HELPFULL" && { usage 1; exit 0; }
+test "$HELPFUL" && { usage 1; exit 0; }
 test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 

@@ -22,7 +22,7 @@ declare -r VERSION='GIT-snapshot'
 
 declare -r EARLY_OPTIONS="
 HELP,h,help,,Show help info and exit
-HELPFULL,H,longhelp,,Exhaustive help info (with modules command-line options)
+HELPFUL,H,longhelp,,Exhaustive help info (with modules command-line options)
 GETVERSION,,version,,Output plowprobe version information and exit
 ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
 EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
@@ -33,7 +33,7 @@ VERBOSE,v,verbose,c|0|1|2|3|4=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (de
 QUIET,q,quiet,,Alias for -v0
 GET_MODULE,,get-module,,Retrieve module name and exit. Faster than --printf=%m
 INTERFACE,i,interface,s=IFACE,Force IFACE network interface
-PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each link). Default string is: \"%F%u%n\".
+PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each link). Default is \"%F%u%n\".
 NO_COLOR,,no-color,,Disables log notice & log error output coloring
 TRY_REDIRECTION,,follow,,If no module is found for link, follow HTTP redirects (curl -L). Default is disabled.
 EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
@@ -279,15 +279,18 @@ TMPDIR=${TMPDIR:-/tmp}
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-mapfile -t MODULES < <(get_all_modules_list "$LIBDIR" 'probe') || exit
-for MODULE in "${MODULES[@]}"; do
-    source "$LIBDIR/modules/$MODULE.sh"
+
+declare -a MODULES=()
+eval "$(get_all_modules_list probe)" || exit
+for MODULE in "${!MODULES_PATH[@]}"; do
+    source "${MODULES_PATH[$MODULE]}"
+    MODULES+=("$MODULE")
 done
 
 # Process command-line (plowprobe early options)
 eval "$(process_core_options 'plowprobe' "$EARLY_OPTIONS" "$@")" || exit
 
-test "$HELPFULL" && { usage 1; exit 0; }
+test "$HELPFUL" && { usage 1; exit 0; }
 test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
@@ -424,13 +427,15 @@ for ITEM in "${COMMAND_LINE_ARGS[@]}"; do
                 log_error "Skip: no module for URL ($(basename_url "$URL")/)"
 
             # Check if plowlist can handle $URL
-            if [[ ! $MODULES_LIST ]]; then
-                mapfile -t MODULES_LIST < <(get_all_modules_list "$LIBDIR" 'list' 'probe') || true
-                for MODULE in "${MODULES_LIST[@]}"; do
-                    source "$LIBDIR/modules/$MODULE.sh"
+            if [[ ! $MODULES2 ]]; then
+                declare -a MODULES2=()
+                eval "$(get_all_modules_list list probe)" || exit
+                for MODULE in "${!MODULES_PATH[@]}"; do
+                    source "${MODULES_PATH[$MODULE]}"
+                    MODULES2+=("$MODULE")
                 done
             fi
-            MODULE=$(get_module "$URL" MODULES_LIST[@]) || true
+            MODULE=$(get_module "$URL" MODULES2[@]) || true
             if [ -n "$MODULE" ]; then
                 log_notice "Note: This URL ($MODULE) is supported by plowlist"
             fi

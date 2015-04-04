@@ -22,7 +22,7 @@ declare -r VERSION='GIT-snapshot'
 
 declare -r EARLY_OPTIONS="
 HELP,h,help,,Show help info and exit
-HELPFULL,H,longhelp,,Exhaustive help info (with modules command-line options)
+HELPFUL,H,longhelp,,Exhaustive help info (with modules command-line options)
 GETVERSION,,version,,Output plowup version information and exit
 ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
 EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
@@ -36,7 +36,7 @@ MIN_LIMIT_RATE,,min-rate,r=SPEED,Limit minimum speed to bytes/sec (during 30 sec
 INTERFACE,i,interface,s=IFACE,Force IFACE network interface
 TIMEOUT,t,timeout,n=SECS,Timeout after SECS seconds of waits
 MAXRETRIES,r,max-retries,N=NUM,Set maximum retries for upload failures (fatal, network errors). Default is 0 (no retry).
-NAME_FORMAT,,name,s=FORMAT,Format destination filename (applies on each file argument). Default string is: \"%f\".
+NAME_FORMAT,,name,s=FORMAT,Format destination filename (applies on each file argument). Default is \"%f\".
 CACHE,,cache,C|none|session|shared=METHOD,Policy for storage data. Available: none, session (default), shared.
 TEMP_DIR,,temp-directory,D=DIR,Directory for temporary files (cookies, images)
 CAPTCHA_METHOD,,captchamethod,s=METHOD,Force specific captcha solving method. Available: online, imgur, x11, fb, nox, none.
@@ -46,7 +46,7 @@ CAPTCHA_ANTIGATE,,antigate,s=KEY,Antigate.com captcha key
 CAPTCHA_BHOOD,,captchabhood,a=USER:PASSWD,CaptchaBrotherhood account
 CAPTCHA_COIN,,captchacoin,s=KEY,captchacoin.com API key
 CAPTCHA_DEATHBY,,deathbycaptcha,a=USER:PASSWD,DeathByCaptcha account
-PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful upload). Default string is: \"%L%M%u%n\".
+PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful upload). Default is \"%L%M%u%n\".
 NO_COLOR,,no-color,,Disables log notice & log error output coloring
 EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
 NO_CURLRC,,no-curlrc,,Do not use curlrc config file"
@@ -256,15 +256,18 @@ TMPDIR=${TMPDIR:-/tmp}
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-mapfile -t MODULES < <(get_all_modules_list "$LIBDIR" 'upload') || exit
-for MODULE in "${MODULES[@]}"; do
-    source "$LIBDIR/modules/$MODULE.sh"
+
+declare -a MODULES=()
+eval "$(get_all_modules_list upload)" || exit
+for MODULE in "${!MODULES_PATH[@]}"; do
+    source "${MODULES_PATH[$MODULE]}"
+    MODULES+=("$MODULE")
 done
 
 # Process command-line (plowup early options)
 eval "$(process_core_options 'plowup' "$EARLY_OPTIONS" "$@")" || exit
 
-test "$HELPFULL" && { usage 1; exit 0; }
+test "$HELPFUL" && { usage 1; exit 0; }
 test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
@@ -295,6 +298,19 @@ if [ -n "$NO_COLOR" ]; then
     unset COLOR
 else
     declare -r COLOR=yes
+fi
+
+if [ "${#MODULES}" -le 0 ]; then
+    log_error \
+"-------------------------------------------------------------------------------
+You plowshare installation has currently no module
+('$LIBDIR/modules' is empty).
+
+In order to use plowup you must install some modules:
+$ mkdir -p $PLOWSHARE_CONFDIR
+$ cd $PLOWSHARE_CONFDIR
+$ git clone https://code.google.com/p/plowshare.modules-unmaintained/ modules
+-------------------------------------------------------------------------------"
 fi
 
 if [ $# -lt 1 ]; then

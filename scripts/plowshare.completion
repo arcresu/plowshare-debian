@@ -1,4 +1,4 @@
-# plowshare4 completion                                    -*- shell-script -*-
+# plowshare completion                                    -*- shell-script -*-
 
 _plowup()
 {
@@ -16,6 +16,10 @@ _plowup()
             ;;
         -a|-b|-d|-p|--auth|--description|--link-password|--min-rate|--max-rate|-r|--max-retries|-t|--timeout|--printf|--9kweu|--antigate|--captchabhood|--captchacoin|--deathbycaptcha)
             # argument required but no completion available
+            return 0
+            ;;
+        --cache)
+            COMPREPLY=( $( compgen -W 'none session shared' -- $cur ) )
             return 0
             ;;
         --captchaprogram|--plowsharerc|--curlrc)
@@ -41,13 +45,17 @@ _plowup()
     if [[ $cur = -* ]]; then
         COMPREPLY=( $( compgen -W '--help --longhelp --version --quiet --verbose \
             -v -q -i -t -r \
-            --min-rate --max-rate --interface --max-retries --timeout --name \
+            --min-rate --max-rate --interface --max-retries --timeout --name --cache \
             --captchamethod --captchaprogram --9kweu --antigate --captchabhood --captchacoin --deathbycaptcha \
             --temp-directory --printf --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
     else
-        local m i list
-        list=$(sed -ne '/^[^#].*|[[:space:]]*upload[[:space:]]*|/p' \
-            /usr/local/share/plowshare4/modules/config | cut -d'|' -f1)
+        local m i list files
+        for i in /usr/local/share/plowshare/modules/config \
+                $HOME/.config/plowshare/modules/config; do
+            test -f $i && files+=($i)
+        done
+
+        list=$(sed -ne '/^[^#].*|[[:space:]]*upload[[:space:]]*|/s/|.*//p' "${files[@]}" | sort -u)
 
         # check for already given module name
         # note: _get_first_arg is not accurate enough (option with argument)
@@ -87,6 +95,10 @@ _plowdown()
             _available_interfaces -a
             return 0
             ;;
+        --cache)
+            COMPREPLY=( $( compgen -W 'none session shared' -- $cur ) )
+            return 0
+            ;;
         --captchamethod)
             COMPREPLY=( $( compgen -W 'imgur none online fb nox x11' -- $cur ) )
             return 0
@@ -100,7 +112,7 @@ _plowdown()
     if [[ $cur = -* ]]; then
         COMPREPLY=( $( compgen -W '--help --longhelp --version --quiet --verbose \
             -v -q -i -o -m -r -t -x \
-            --min-space --max-rate --interface --mark-downloaded --no-overwrite \
+            --min-space --max-rate --interface --mark-downloaded --no-overwrite --cache \
             --output-directory --temp-directory --temp-rename --timeout --max-retries \
             --captchamethod --captchaprogram --9kweu --antigate --captchabhood --captchacoin --deathbycaptcha \
             --fallback --printf --run-before --run-after --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
