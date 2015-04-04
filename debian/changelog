@@ -1,3 +1,11 @@
+plowshare4 (2.0.1-1) experimental; urgency=medium
+
+  * New upstream release.
+  * patches/spelling*.patch:
+    - Removed patches which are fixed upstream
+
+ -- Carl Suster <carl@contraflo.ws>  Sat, 4 Apr 2015 13:00:00 +1100
+
 plowshare4 (1.2.0-1) experimental; urgency=medium
 
   * New upstream release.
