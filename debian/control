@@ -1,4 +1,4 @@
-Source: plowshare4
+Source: plowshare
 Section: web
 Priority: optional
 Maintainer: Carl Suster <carl@contraflo.ws>
@@ -10,14 +10,17 @@ Homepage: https://github.com/mcrapet/plowshare
 Vcs-Git: git://github.com/arcresu/plowshare4-debian.git -b debian/unstable
 Vcs-Browser: https://github.com/arcresu/plowshare4-debian
 
-Package: plowshare4
+Package: plowshare
 Architecture: all
+Replaces: plowshare4 (<< 2.0.1~)
+Breaks: plowshare4 (<< 2.0.1~)
 Depends:
  curl (>=7.24),
  recode | libhtml-parser-perl,
  rhino,
  ${misc:Depends}
 Recommends:
+ plowshare-modules,
  qiv | feh | sxiv | imagemagick
 Suggests:
  aview | caca-utils,
@@ -28,5 +31,14 @@ Description: Download and upload files from file sharing websites
  CAPTCHAs to solve or sending them to CAPTCHA web services.
  .
  This package does not contain any of the drivers (called 'modules') for
- specific file sharing websites, which must be installed separately due to
- their dependence on often undocumented and rapidly changing external APIs.
+ specific file sharing websites.
+
+Package: plowshare4
+Priority: extra
+Section: oldlibs
+Architecture: all
+Depends:
+ plowshare,
+ ${misc:Depends}
+Description: transitional dummy package
+ This is a transitional dummy package. It can be safely removed.

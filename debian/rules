@@ -8,17 +8,17 @@
 
 override_dh_fixperms:
 	dh_fixperms
-	chmod a+x debian/plowshare4/usr/share/plowshare4/core.sh
+	chmod a+x debian/plowshare/usr/share/plowshare/core.sh
 
 override_dh_bash-completion:
 	dh_bash-completion
 	sed -i -e '/cut/ s,/usr/local,/usr,' \
-		debian/plowshare4/etc/bash_completion.d/plowshare
+		debian/plowshare/etc/bash_completion.d/plowshare
 
 override_dh_install:
 	dh_install
 	v=$(shell cat debian/git-describe) && \
-		for file in debian/plowshare4/usr/share/plowshare4/*.sh; do \
+		for file in debian/plowshare/usr/share/plowshare/*.sh; do \
 			sed -i -e 's/^\(declare -r VERSION=\).*/\1'"'$$v'"'/' "$$file"; \
 		done
 

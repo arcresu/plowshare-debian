@@ -1,19 +1,20 @@
-plowshare4 (2.0.1-1) experimental; urgency=medium
+plowshare (2.0.1-1) experimental; urgency=medium
 
   * New upstream release.
+  * Rename plowshare4 -> plowshare source and binary
+  * Remove the modules which now live in package plowshare-modules
   * patches/spelling*.patch:
     - Removed patches which are fixed upstream
   * patches/*:
     - Removed patches made irrelevant due to underlying changes in the code
-  * All modules are removed and are now to be installed separately in the
-    home directory due to a change in upstream organisation
   * debian/copyright:
     - Remove sections referring to deleted files
     - Point to new official source code location
   * debian/control:
     - Update description and homepage to reflect upstream reorganisation
+    - Create a transitional dummy package for the rename
   * debian/watch:
-    - Update to scan releases on GitHub
+    - Update to scan releases from the new upstream location
 
  -- Carl Suster <carl@contraflo.ws>  Sat, 4 Apr 2015 13:00:00 +1100
 
