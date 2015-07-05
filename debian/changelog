@@ -1,4 +1,4 @@
-plowshare (2.0.1-1) experimental; urgency=medium
+plowshare (2.0.1-1) unstable; urgency=medium
 
   * New upstream release.
   * Rename plowshare4 -> plowshare source and binary
@@ -16,7 +16,7 @@ plowshare (2.0.1-1) experimental; urgency=medium
   * debian/watch:
     - Update to scan releases from the new upstream location
 
- -- Carl Suster <carl@contraflo.ws>  Sat, 4 Apr 2015 13:00:00 +1100
+ -- Carl Suster <carl@contraflo.ws>  Sat, 05 Jul 2015 13:00:00 +1100
 
 plowshare4 (1.2.0-1) experimental; urgency=medium
 
