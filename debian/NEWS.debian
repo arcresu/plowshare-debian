@@ -1,0 +1,11 @@
+plowshare (2.0.1-1) unstable; urgency=medium
+
+  Upstream has split the plowshare modules into a separate repository and has
+  decided not to maintain them as carefully as before. A new package called
+  plowshare-modules will package snapshots of this new repository:
+  https://github.com/mcrapet/plowshare-modules-legacy
+  There will be a tool included with future versions of plowshare to help with
+  manually updating a local copy of the scripts, which you can do instead of
+  using this new package if you want faster updates.
+
+ -- Carl Suster <carl@contraflo.ws>  Sun, 05 Jul 2015 13:00:00 +1100
