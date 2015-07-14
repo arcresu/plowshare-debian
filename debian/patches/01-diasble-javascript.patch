@@ -1,0 +1,56 @@
+Author: Carl Suster <carl@contraflo.ws>
+Bug-Debian: http://bugs.debian.org/791467
+Description: Disable javascript execution
+ Plowshare uses rhino CLI to execute javascript downloaded from the Internet.
+ Since this is not filtered or sandboxed at all, the javascript can obtain
+ arbitrary access to the system and so this patch disables it.
+ .
+ Some modules will be broken by this change, but since the modules will break
+ anyway it is expected that most users will be using a more recent version of
+ this package, and in future less aggressive fixes will be investigated.
+
+Index: plowshare/src/core.sh
+===================================================================
+--- plowshare.orig/src/core.sh
++++ plowshare/src/core.sh
+@@ -1175,34 +1175,22 @@ post_login() {
+     fi
+ }
+ 
++# NB: Javascript disabled due to #791467
+ # Detect if a JavaScript interpreter is installed
+ # $? is zero on success
+ detect_javascript() {
+-    if ! type -P js >/dev/null 2>&1; then
+-        log_notice 'Javascript interpreter not found. Please install one!'
+-        return $ERR_SYSTEM
+-    fi
++    log_notice 'Use of Javascript interpreter is disabled in debian for security.'
++    return $ERR_SYSTEM
+ }
+ 
++# NB: Javascript disabled due to #791467
+ # Execute javascript code
+ #
+ # stdin: js script
+ # stdout: script result
+ javascript() {
+-    local TEMPSCRIPT
+-
+-    detect_javascript || return
+-    TEMPSCRIPT=$(create_tempfile '.js') || return
+-    cat > "$TEMPSCRIPT"
+-
+-    log_report "interpreter: $(type -P js)"
+-    log_report '=== JAVASCRIPT BEGIN ==='
+-    logcat_report "$TEMPSCRIPT"
+-    log_report '=== JAVASCRIPT END ==='
+-
+-    command js "$TEMPSCRIPT"
+-    rm -f "$TEMPSCRIPT"
+-    return 0
++    log_notice 'Use of Javascript interpreter is disabled in debian for security.'
++    return $ERR_SYSTEM
+ }
+ 
+ # Wait some time

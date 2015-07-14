@@ -10,7 +10,7 @@ Vcs-Browser: https://github.com/arcresu/plowshare4-debian
 
 Package: plowshare4
 Architecture: all
-Depends: ${misc:Depends}, bash (>=4.1), curl (>=7.24), recode | libhtml-parser-perl, rhino
+Depends: ${misc:Depends}, bash (>=4.1), curl (>=7.24), recode | libhtml-parser-perl
 Recommends: qiv | feh | sxiv | imagemagick
 Suggests: aview | caca-utils, fbi
 Description: Download and upload files from file sharing websites
