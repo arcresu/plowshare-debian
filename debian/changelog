@@ -1,4 +1,4 @@
-plowshare4 (1.0.5-2) stable; urgency=high
+plowshare4 (1.0.5-2) unstable; urgency=high
 
   * Disable javascript support (Closes: #791467)
 
