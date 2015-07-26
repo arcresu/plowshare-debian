@@ -1,6 +1,6 @@
-Bug-Database: https://code.google.com/p/plowshare/issues/list
-Bug-Submit: https://code.google.com/p/plowshare/issues/entry
-Changelog: https://code.google.com/p/plowshare/wiki/PlowshareChanges
+Bug-Database: https://github.com/mcrapet/plowshare/issues
+Bug-Submit: https://github.com/mcrapet/plowshare/issues/new
+Changelog: https://github.com/mcrapet/plowshare/blob/master/CHANGELOG
 Contact: Matthieu Crapet <mcrapet@gmail.com>
-Repository: https://code.google.com/p/plowshare/ 
-Repository-Browse: https://code.google.com/p/plowshare/source/browse/
+Repository: https://github.com/mcrapet/plowshare.git
+Repository-Browse: https://github.com/mcrapet/plowshare
