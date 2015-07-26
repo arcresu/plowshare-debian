@@ -18,6 +18,12 @@ plowshare (2.0.1-1) unstable; urgency=medium
 
  -- Carl Suster <carl@contraflo.ws>  Sun, 05 Jul 2015 13:00:00 +1100
 
+plowshare4 (1.0.5-2) unstable; urgency=high
+
+  * Disable javascript support (Closes: #791467)
+
+ -- Carl Suster <carl@contraflo.ws>  Tue, 14 Jul 2015 18:45:22 +1000
+
 plowshare4 (1.2.0-1) experimental; urgency=medium
 
   * New upstream release.

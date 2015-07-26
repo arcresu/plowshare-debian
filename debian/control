@@ -17,7 +17,6 @@ Breaks: plowshare4 (<< 2.0.1~)
 Depends:
  curl (>=7.24),
  recode | libhtml-parser-perl,
- rhino,
  ${misc:Depends}
 Recommends:
  plowshare-modules,
