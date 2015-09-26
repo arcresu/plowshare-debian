@@ -2,20 +2,29 @@ plowshare (2.0.1-1) unstable; urgency=medium
 
   * New upstream release.
     - Removed patches applied upstream (Closes: #780311)
-  * Rename plowshare4 -> plowshare source and binary
-  * Remove the modules which now live in the new package plowshare-modules
-  * debian/copyright:
-    - Remove sections referring to removed files
-    - New upstream source code location
-  * debian/upstream/metadata:
-    - New upstream location googlecode -> github
-  * debian/control:
-    - Update description and homepage to reflect upstream reorganisation
-    - Create a transitional dummy package for the rename
-  * debian/watch:
-    - Check for releases at the new upstream location
 
- -- Carl Suster <carl@contraflo.ws>  Sun, 26 Jul 2015 19:11:31 +1000
+  * Upload to unstable
+
+  * The modules are now split into a separate package plowshare-modules
+    - Upstream no longer officially maintains the modules
+    - Now just the framework lives in this package
+    - Remove the modules which now live in the new package plowshare-modules
+    - debian/copyright: remove references to removed files
+    - debian/copyright: new upstream location
+    - debian/upstream/metadata: new upstream location
+    - debian/watch: new upstream location
+    - debian/control: new upstream homepage
+    - debian/control: explain the separation of code in the description
+    - debian/control: recommend the new modules package
+    - debian/NEWS: announce the restructuring
+
+  * Rename plowshare4 -> plowshare source and binary to reflect new name
+    - debian/control: transitional package to handle the rename
+
+  * debian/rules:
+    - Use new bash completion path (Closes: #798806)
+
+ -- Carl Suster <carl@contraflo.ws>  Sun, 26 Sep 2015 14:32:31 +0200
 
 plowshare4 (1.0.5-2) unstable; urgency=high
 
