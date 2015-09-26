@@ -24,7 +24,7 @@ plowshare (2.0.1-1) unstable; urgency=medium
   * debian/rules:
     - Use new bash completion path (Closes: #798806)
 
- -- Carl Suster <carl@contraflo.ws>  Sun, 26 Sep 2015 14:32:31 +0200
+ -- Carl Suster <carl@contraflo.ws>  Sat, 26 Sep 2015 14:32:31 +0200
 
 plowshare4 (1.0.5-2) unstable; urgency=high
 
