@@ -20,6 +20,7 @@ plowshare (2.0.1-1) unstable; urgency=medium
 
   * Rename plowshare4 -> plowshare source and binary to reflect new name
     - debian/control: transitional package to handle the rename
+    - debian/copyright: update upstream name
 
   * debian/rules:
     - Use new bash completion path (Closes: #798806)
