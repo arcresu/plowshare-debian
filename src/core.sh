@@ -613,7 +613,9 @@ parse_quiet() {
 parse_json() {
     local -r NAME="\"$1\"[[:space:]]*:[[:space:]]*"
     local STR PRE
-    local -r END='\([,}[:space:]].*\)\?$'
+    # Note: Be nice with unicode chars and don't use $ (end-of-line).
+    # Because dot will not match everthing.
+    local -r END='\([,}[:space:]].*\)\?'
 
     if [ "$2" = 'join' ]; then
         PRE="tr -d '\n\r'"
@@ -1001,8 +1003,7 @@ basename_url() {
 #
 # $1: filename
 basename_file() {
-    # `basename -- "$1"` may be screwed on some BusyBox versions
-    echo "${1##*/}"
+    basename -- "$1" || return $ERR_SYSTEM
 }
 
 # HTML entities will be translated
@@ -2394,7 +2395,7 @@ translate_size() {
             ;;
         # kibibyte (KiB)
         KiB|Ki|K|KB)
-            echo $(( 1024 * R + F))
+            echo $(( 1024 * R + 1024 * F / 1000))
             ;;
         # megabyte (10^6)
         M|MB)
@@ -2402,7 +2403,7 @@ translate_size() {
             ;;
         # mebibyte (MiB)
         MiB|Mi|m|mB)
-            echo $(( 1048576 * R + 1000 * F))
+            echo $(( 1048576 * R + 1048576 * F / 1000))
             ;;
         # gigabyte (10^9)
         G|GB)
@@ -2410,7 +2411,7 @@ translate_size() {
             ;;
         # gibibyte (GiB)
         GiB|Gi)
-            echo $(( 1073741824 * R + 1000000 * F))
+            echo $(( 1073741824 * R + 1073741824 * F / 1000))
             ;;
         # bytes
         B|'')
@@ -2448,7 +2449,7 @@ storage_set() {
         CONFIG="$PLOWSHARE_CONFDIR/storage"
 
         if [ ! -d "$CONFIG" ]; then
-            mkdir --parents "$CONFIG"
+            mkdir -p "$CONFIG"
             chmod 700 "$CONFIG"
         fi
 
@@ -2749,9 +2750,10 @@ get_all_modules_list() {
         if [[ -d "$D" && -f "$CONFIG" ]]; then
             while read -r; do
                 if [ -f "$D/$REPLY.sh" ]; then
-                    if [[ ${MODULES_PATH["$REPLY"]} ]]; then
-                        stderr "INFO: $CONFIG: \`$REPLY\` module overwrite, this one is taken"
-                    fi
+                    # Silent override: modues installed in $HOME prevails over $LIBDIR
+                    #if [[ ${MODULES_PATH["$REPLY"]} ]]; then
+                    #    stderr "INFO: $CONFIG: \`$REPLY\` module overwrite, this one is taken"
+                    #fi
                     MODULES_PATH[$REPLY]="$D/$REPLY.sh"
                 else
                     stderr "ERROR: $CONFIG: \`$REPLY\` module not found, ignoring"
@@ -2883,7 +2885,7 @@ process_configfile_module_options() {
 # $1: absolute path to plowshare's libdir
 log_report_info() {
     local -r LIBDIR1=$1
-    local G GIT_DIR LIBDIR2
+    local G LIBDIR2
 
     if test $VERBOSE -ge 4; then
         log_report '=== SYSTEM INFO BEGIN ==='
@@ -2908,10 +2910,10 @@ log_report_info() {
             fi
         done
 
-        GIT_DIR=$(git --work-tree "$LIBDIR" rev-parse --quiet --git-dir) || true
-        if [ -d "$GIT_DIR" ]; then
-            local -r GIT_BRANCH=$(git --git-dir=$GIT_DIR rev-parse --quiet --abbrev-ref HEAD)
-            local -r GIT_REV=$(git --git-dir=$GIT_DIR describe --tags --always 2>/dev/null)
+        # Note: git -C <path> is available since v1.8.5
+        if git -C "$LIBDIR" rev-parse --is-inside-work-tree &>/dev/null; then
+            local -r GIT_BRANCH=$(git -C "$LIBDIR" rev-parse --quiet --abbrev-ref HEAD)
+            local -r GIT_REV=$(git -C "$LIBDIR" describe --tags --always 2>/dev/null)
             log_report "[git ] $GIT_REV ($GIT_BRANCH branch)"
         fi
 

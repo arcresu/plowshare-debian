@@ -62,11 +62,14 @@ PS: You'll probably need to be root to execute the plowshare package.
 
 2) Manual method: from git sources
 
+$ git clone https://github.com/mcrapet/plowshare.git
+
 # If you have root privileges (like Ubuntu)
 $ sudo make install
 
 # For non root users, you can override default prefix (/usr)
-$ make install PREFIX=/home/$USER/local
+# (make sure you have $HOME/local/bin in you PATH)
+$ make install PREFIX=$HOME/local
 
 Note for BSD users (Free BSD & Mac OSX)
 ------------------
@@ -97,7 +100,7 @@ $ plowmod --install
 
 plowmod is a simple tool for managing your modules directory (~/.config/plowshare/modules.d).
 
-If git is installed, you can use later:
+If git (>1.8.5) is installed, you can use later:
 $ plowmod --update
 
 Plowmod can handle 3rd part repositories. See man page for more information.
