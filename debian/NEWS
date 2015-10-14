@@ -1,4 +1,4 @@
-plowshare (2.1.0-1) unstable; urgency=medium
+plowshare (2.1.2-1) unstable; urgency=medium
 
   This version of plowshare includes a new tool, plowmod, for manual management
   of modules. You may choose to use this tool instead of or alongside the

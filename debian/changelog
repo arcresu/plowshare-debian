@@ -1,6 +1,6 @@
-plowshare (2.1.0-1) unstable; urgency=medium
+plowshare (2.1.2-1) unstable; urgency=medium
 
-  * New upstream release.
+  * New upstream releases.
     - debian/NEWS: note support for user modules.
     - debian/NEWS, debian/README: note the new plowmod tool.
     - debian/rules: install new upstream changelog.
