@@ -3,6 +3,9 @@
 # Uncomment this to turn on verbose mode.
 # export DH_VERBOSE=1
 
+DEB_UPSTREAM_VERSION ?= $(shell dpkg-parsechangelog \
+                          | sed -rne 's/^Version: ([0-9.]+)[-+].*$$/\1/p')
+
 %:
 	dh $@ --with bash-completion
 
@@ -17,9 +20,9 @@ override_dh_bash-completion:
 
 override_dh_install:
 	dh_install
-	v=$(shell cat debian/git-describe) && \
+	v=$(DEB_UPSTREAM_VERSION) && \
 		for file in debian/plowshare/usr/share/plowshare/*.sh; do \
-			sed -i -e 's/^\(declare -r VERSION=\).*/\1'"'$$v'"'/' "$$file"; \
+			sed -i -e 's/^\(declare -r VERSION=\).*/\1'"'v$$v'"'/' "$$file"; \
 		done
 
 override_dh_auto_build override_dh_auto_install:

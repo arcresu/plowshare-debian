@@ -4,7 +4,8 @@ Priority: optional
 Maintainer: Carl Suster <carl@contraflo.ws>
 Build-Depends:
  bash-completion,
- debhelper (>= 9)
+ debhelper (>= 9),
+ dpkg-dev
 Standards-Version: 3.9.6
 Homepage: https://github.com/mcrapet/plowshare
 Vcs-Git: git://github.com/arcresu/plowshare4-debian.git -b debian/unstable
@@ -24,7 +25,7 @@ Recommends:
 Suggests:
  aview | caca-utils,
  fbi
-Description: Download and upload files from file sharing websites
+Description: download and upload files from file sharing websites
  Plowshare is a framework for interacting with file sharing websites, providing
  an API to perform tasks like uploading and downloading files, and displaying
  CAPTCHAs to solve or sending them to CAPTCHA web services.

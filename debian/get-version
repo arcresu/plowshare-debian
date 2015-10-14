@@ -1,0 +1,7 @@
+#!/bin/bash
+
+git describe \
+  --always \
+  --tags \
+  $(git merge-base HEAD upstream/master) \
+    | sed -e 's/^v//'
