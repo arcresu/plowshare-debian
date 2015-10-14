@@ -1,3 +1,12 @@
+plowshare (2.1.0-1) unstable; urgency=medium
+
+  This version of plowshare includes a new tool, plowmod, for manual management
+  of modules. You may choose to use this tool instead of or alongside the
+  plowshare-modules package, but note that it will result in the execution of
+  arbitrary code downloaded from the Internet. See README.Debian for details.
+
+ -- Carl Suster <carl@contraflo.ws>  Wed, 14 Oct 2015 15:33:28 +0200
+
 plowshare (2.0.1-1) unstable; urgency=medium
 
   Upstream has split the plowshare modules into a separate repository and has

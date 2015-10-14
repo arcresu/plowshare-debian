@@ -1,6 +1,7 @@
-docs/plowdown.1
-docs/plowup.1
 docs/plowdel.1
+docs/plowdown.1
 docs/plowlist.1
+docs/plowmod.1
 docs/plowprobe.1
 docs/plowshare.conf.5
+docs/plowup.1

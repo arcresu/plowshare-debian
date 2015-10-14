@@ -1,3 +1,23 @@
+plowshare (2.1.0-1) unstable; urgency=medium
+
+  * New upstream release.
+    - debian/rules: install new upstream changelog.
+    - adds support for user modules.
+    - adds plowmod for manual module updating.
+
+  * debian/gbp.conf, debian/get-version, debian/rules:
+    - Remove dependency on git history from the build process.
+
+  * debian/plowshare.completion: install completion for each command.
+
+  * debian/plowshare.links, debian/plowshare.manpages:
+    - sort alphabetically.
+    - add files for plowmod.
+
+  * debian/NEWS, debian/README: note the new plowmod tool.
+
+ -- Carl Suster <carl@contraflo.ws>  Wed, 14 Oct 2015 15:33:28 +0200
+
 plowshare (2.0.1-1) unstable; urgency=medium
 
   * New upstream release.
