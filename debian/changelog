@@ -6,6 +6,7 @@ plowshare (2.1.0-1) unstable; urgency=medium
     - debian/rules: install new upstream changelog.
     - debian/plowshare.links, debian/plowshare.manpages: add plowmod.
     - debian/plowshare.docs: README -> README.md.
+    - debian/control: suggest git for use with plowmod.
 
   * debian/gbp.conf, debian/get-version, debian/rules:
     - Remove dependency on git history from the build process.

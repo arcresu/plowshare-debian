@@ -23,7 +23,8 @@ Recommends:
  qiv | feh | sxiv | imagemagick
 Suggests:
  aview | caca-utils,
- fbi
+ fbi,
+ git
 Description: download and upload files from file sharing websites
  Plowshare is a framework for interacting with file sharing websites, providing
  an API to perform tasks like uploading and downloading files, and displaying
