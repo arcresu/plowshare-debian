@@ -19,7 +19,7 @@
 .\" License along with this manual; if not, see
 .\" <http://www.gnu.org/licenses/>.
 
-.TH "plowprobe" "1" "February 5, 2015" "GPL" "Plowshare for Bash 4"
+.TH "plowprobe" "1" "March 23, 2015" "GPL" "Plowshare for Bash 4"
 
 .SH NAME
 plowprobe \- Gather information from file sharing download links
@@ -35,8 +35,6 @@ plowprobe \- Gather information from file sharing download links
 is a command-line tool designed for retrieving metadata from file-sharing
 download links. Information are printed on stdout (only alive links).
 Provided links can also be downloaded with plowdown(1).
-
-Currently supported hosting sites list is available in README file.
 
 .\" ****************************************************************************
 .\" * Options                                                                  *
@@ -105,10 +103,10 @@ modules.
 .TP
 .BI -v, " " --verbose= LEVEL
 Set output verbosity level:
-.RS 
+.RS
 \fB0\fR  none,
 .RE
-.RS 
+.RS
 \fB1\fR  errors,
 .RE
 .RS
@@ -174,27 +172,6 @@ Output version information and exit.
 There is none yet!
 
 .\" ****************************************************************************
-.\" * Examples                                                                 *
-.\" ****************************************************************************
-.SH EXAMPLES
-
-.SS 1) Filter alive links in a text file 
-.EX
-$ plowprobe file_with_links.txt > file_with_active_links.txt
-# Or
-$ cat file_with_links.txt | plowprobe - > file_with_active_links.txt
-.EE
-.SS 2) Custom results format
-.EX
-.sp 1
-# Print links information: filename and hash
-$ plowprobe \-\-printf '# %f (%h)%n%u%n' http://www.sendspace.com/file/5njdw7
-.sp 1
-# Print a JSON result
-$ plowprobe \-\-printf '{"url":"%U","size":%s}%n' http://www.sendspace.com/file/5njdw7
-.EE
-
-.\" ****************************************************************************
 .\" * Files                                                                    *
 .\" ****************************************************************************
 .SH "FILES"
@@ -208,9 +185,9 @@ Systemwide configuration file.
 The file format is described in
 .BR plowshare.conf (5).
 .TP
-.I ~/.config/plowshare/modules/
+.I ~/.config/plowshare/modules.d/
 User directory considered when searching for modules at startup
-(plowprobe will try to open \fB~/.config/plowshare/modules/config\fR).
+(plowprobe will try to open \fB~/.config/plowshare/modules.d/*/config\fR).
 One file per module (hoster).
 
 .\" ****************************************************************************

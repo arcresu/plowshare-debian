@@ -19,7 +19,7 @@
 .\" License along with this manual; if not, see
 .\" <http://www.gnu.org/licenses/>.
 
-.TH "plowup" "1" "February 5, 2015" "GPL" "Plowshare for Bash 4"
+.TH "plowup" "1" "March 23, 2015" "GPL" "Plowshare for Bash 4"
 
 .SH NAME
 plowup \- Simple upload manager for file sharing websites
@@ -35,8 +35,6 @@ plowup \- Simple upload manager for file sharing websites
 .B plowup
 is a command-line tool designed for automatic upload on file-sharing websites.
 It acts like a web browser, retrieving pages and filling HTML forms.
-
-Currently supported hosting sites list is available in README file.
 
 Anonymous upload is not allowed by all sites, some of them may require authentication.
 See specific module options below.
@@ -246,7 +244,7 @@ module name
 newline
 .TP
 \fI%s\fR
-filesize (positive interger in bytes)
+filesize (positive integer in bytes)
 .TP
 \fI%t\fR
 tabulation character
@@ -354,39 +352,6 @@ All switches are not implemented nor required for all modules.
 See long help message for detailed modules option list.
 
 .\" ****************************************************************************
-.\" * Examples                                                                 *
-.\" ****************************************************************************
-.SH EXAMPLES
-
-.SS 1) Upload a single file anonymously
-.EX
-$ plowup bayfiles /tmp/foo.bar
-.sp 1
-# Add a text description
-$ plowup \-d "Important document" megashares /path/myfile.tex
-.sp 1
-# Abort slow upload (if rate is below limit during 30 seconds)
-$ plowup \-\-min\-rate 100k mediafire /path/bigfile.zip
-.EE
-.SS 2) Upload a single file with authentication
-.EX
-# Change destination filename
-$ plowup \-a 'myuser:mypassword' turbobit /path/myfile.txt:anothername.txt
-.EE
-.SS 3) Remote upload
-Note: URL fetching is rarely implemented by modules.
-
-.EX
-# Feature dedicated to premium members
-$ plowup \-a myuser:mypassword rapidgator \\
-    http://www.somewherefarbeyond.com/somefile
-.sp 1
-# Change destination filename
-$ plowup \-a myuser:mypassword rapidgator \\
-    http://www.somewherefarbeyond.com/somefile:anothername
-.EE
-
-.\" ****************************************************************************
 .\" * Files                                                                    *
 .\" ****************************************************************************
 .SH "FILES"
@@ -403,9 +368,9 @@ The file format is described in
 .I ~/.config/plowshare/exec/
 Additional directory considered when searching for executable. See \fB--captchaprogram\fR switch.
 .TP
-.I ~/.config/plowshare/modules/
+.I ~/.config/plowshare/modules.d/
 User directory considered when searching for modules at startup
-(plowup will try to open \fB~/.config/plowshare/modules/config\fR).
+(plowup will try to open \fB~/.config/plowshare/modules.d/*/config\fR).
 One file per module (hoster).
 .TP
 .I ~/.config/plowshare/storage/

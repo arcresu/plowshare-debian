@@ -416,7 +416,7 @@ download() {
         if [[ $BASE_URL =~ :([[:digit:]]{2,5})$ ]]; then
             local -i PORT=${BASH_REMATCH[1]}
             if (( PORT != 80 && PORT != 443 )); then
-                log_notice "Warning: Final URL requires an outgoing TCP connection to port $PORT, hope you're not behind a proxy/firewall"
+                log_notice "WARNING: Final URL requires an outgoing TCP connection to port $PORT, hope you're not behind a proxy/firewall."
             fi
         fi
 
@@ -494,9 +494,9 @@ download() {
                     # Can we overwrite destination file?
                     if [ ! -w "$FILENAME_OUT" ]; then
                         if module_config_resume "$MODULE"; then
-                            log_error "error: no write permission, cannot resume final file ($FILENAME_OUT)"
+                            log_error "ERROR: No write permission, cannot resume final file ($FILENAME_OUT)"
                         else
-                            log_error "error: no write permission, cannot overwrite final file ($FILENAME_OUT)"
+                            log_error "ERROR: No write permission, cannot overwrite final file ($FILENAME_OUT)"
                         fi
                         return $ERR_SYSTEM
                     fi
@@ -510,19 +510,19 @@ download() {
                 if [ -f "$FILENAME_OUT" ]; then
                     # Can we overwrite destination file?
                     if [ ! -w "$FILENAME_OUT" ]; then
-                        log_error "error: no write permission, cannot overwrite final file ($FILENAME_OUT)"
+                        log_error "ERROR: No write permission, cannot overwrite final file ($FILENAME_OUT)"
                         return $ERR_SYSTEM
                     fi
-                    log_notice "warning: final file will be overwritten ($FILENAME_OUT)"
+                    log_notice 'WARNING: The filename file already exists, overwrite it. Use `plowdown --no-overwrite'\'' to disable.'
                 fi
 
                 if [ -f "$FILENAME_TMP" ]; then
                     # Can we overwrite temporary file?
                     if [ ! -w "$FILENAME_TMP" ]; then
                         if module_config_resume "$MODULE"; then
-                            log_error "error: no write permission, cannot resume tmp/part file ($FILENAME_TMP)"
+                            log_error "ERROR: No write permission, cannot resume tmp/part file ($FILENAME_TMP)"
                         else
-                            log_error "error: no write permission, cannot overwrite tmp/part file ($FILENAME_TMP)"
+                            log_error "ERROR: No write permission, cannot overwrite tmp/part file ($FILENAME_TMP)"
                         fi
                         return $ERR_SYSTEM
                     fi
@@ -560,7 +560,7 @@ download() {
             fi
 
             DRETVAL=0
-            curl_with_log "${CURL_ARGS[@]}" --fail --globoff \
+            umask 0066 && curl_with_log "${CURL_ARGS[@]}" --fail --globoff \
                 -w '%{http_code}\t%{size_download}' \
                 -o "$FILENAME_TMP" "$FILE_URL" >"$DRESULT" || DRETVAL=$?
             IFS=$'\t' read -r STATUS FILE_SIZE < "$DRESULT"
@@ -802,13 +802,11 @@ fi
 if [ "${#MODULES}" -le 0 ]; then
     log_error \
 "-------------------------------------------------------------------------------
-You plowshare installation has currently no module
-('$LIBDIR/modules' is empty).
+Your plowshare installation has currently no module.
+($PLOWSHARE_CONFDIR/modules.d/ is empty)
 
-In order to use plowdown you must install some modules:
-$ mkdir -p $PLOWSHARE_CONFDIR
-$ cd $PLOWSHARE_CONFDIR
-$ git clone https://code.google.com/p/plowshare.modules-unmaintained/ modules
+In order to use plowdown you must install some modules. Here is a quick start:
+$ plowmod --install
 -------------------------------------------------------------------------------"
 fi
 
@@ -837,7 +835,7 @@ fi
 if [ -n "$OUTPUT_DIR" ]; then
     log_notice "Output directory: ${OUTPUT_DIR%/}"
 elif [ ! -w "$PWD" ]; then
-    log_notice 'Warning: Current directory is not writable!'
+    log_notice 'WARNING: Current directory is not writable, you may experience troubles.'
 fi
 
 if [ -n "$MIN_LIMIT_SPACE" ]; then
@@ -894,10 +892,6 @@ if [ ${#COMMAND_LINE_ARGS[@]} -eq 0 ]; then
 fi
 
 set_exit_trap
-
-# Save umask
-declare -r UMASK=$(umask)
-test "$UMASK" && umask 0066
 
 # Remember last host because hosters may require waiting between
 # successive downloads.
@@ -1053,9 +1047,6 @@ done
 if [ "$CACHE" != 'shared' ]; then
     for MODULE in "${!CACHED_MODULES[@]}"; do storage_reset; done
 fi
-
-# Restore umask
-test "$UMASK" && umask $UMASK
 
 if [ ${#RETVALS[@]} -eq 0 ]; then
     exit 0

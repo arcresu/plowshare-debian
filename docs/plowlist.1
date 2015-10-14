@@ -19,7 +19,7 @@
 .\" License along with this manual; if not, see
 .\" <http://www.gnu.org/licenses/>.
 
-.TH "plowlist" "1" "February 5, 2015" "GPL" "Plowshare for Bash 4"
+.TH "plowlist" "1" "March 23, 2015" "GPL" "Plowshare for Bash 4"
 
 .SH NAME
 plowlist \- List links from shared folders websites
@@ -34,8 +34,6 @@ plowlist \- List links from shared folders websites
 .B plowlist
 is a command-line tool designed for listing links (files) on file-sharing websites.
 Provided links can be downloaded with plowdown(1).
-
-Currently supported hosting sites list is available in README file.
 
 .\" ****************************************************************************
 .\" * Options                                                                  *
@@ -81,10 +79,10 @@ same as \fB%u\fR but url is escaped for JSON usage
 .TP
 .BI -v, " " --verbose= LEVEL
 Set output verbosity level:
-.RS 
+.RS
 \fB0\fR  none,
 .RE
-.RS 
+.RS
 \fB1\fR  errors,
 .RE
 .RS
@@ -152,29 +150,6 @@ All switches are not implemented nor required for all modules.
 See help message for detailed modules option list.
 
 .\" ****************************************************************************
-.\" * Examples                                                                 *
-.\" ****************************************************************************
-.SH EXAMPLES
-
-.SS 1) List links providing shared folder URL(s)
-.EX
-$ plowlist http://rapidgator.net/folder/1689302/Test.html
-.sp 1
-# First URL is processed, then the second one (this is not parallel)
-$ plowlist http://www.mediafire.com/?qouncpzfe74s9 \\
-    http://www.sendspace.com/folder/5njdw7
-.EE
-.SS 2) Custom results format
-.EX
-# List to give to plowdown (only links, no filenames)
-$ plowlist \-\-printf '%u%n' http://www.sendspace.com/folder/5njdw7 >mylist.txt
-.sp 1
-# vBulletin "BB" syntax
-$ plowlist \-\-printf '[url=%u]%f[/url]%n' \\
-    http://www.sendspace.com/folder/5njdw7 >mylist.txt
-.EE
-
-.\" ****************************************************************************
 .\" * Files                                                                    *
 .\" ****************************************************************************
 .SH "FILES"
@@ -188,9 +163,9 @@ Systemwide configuration file.
 The file format is described in
 .BR plowshare.conf (5).
 .TP
-.I ~/.config/plowshare/modules/
+.I ~/.config/plowshare/modules.d/
 User directory considered when searching for modules at startup
-(plowlist will try to open \fB~/.config/plowshare/modules/config\fR).
+(plowlist will try to open \fB~/.config/plowshare/modules.d/*/config\fR).
 One file per module (hoster).
 
 .\" ****************************************************************************

@@ -303,13 +303,11 @@ fi
 if [ "${#MODULES}" -le 0 ]; then
     log_error \
 "-------------------------------------------------------------------------------
-You plowshare installation has currently no module
-('$LIBDIR/modules' is empty).
+Your plowshare installation has currently no module.
+($PLOWSHARE_CONFDIR/modules.d/ is empty)
 
-In order to use plowup you must install some modules:
-$ mkdir -p $PLOWSHARE_CONFDIR
-$ cd $PLOWSHARE_CONFDIR
-$ git clone https://code.google.com/p/plowshare.modules-unmaintained/ modules
+In order to use plowup you must install some modules. Here is a quick start:
+$ plowmod --install
 -------------------------------------------------------------------------------"
 fi
 
@@ -391,10 +389,11 @@ if [ ${#COMMAND_LINE_ARGS[@]} -eq 0 ]; then
 fi
 
 # Check requested module
-MODULE=$(module_exist MODULES[@] "${COMMAND_LINE_ARGS[0]}") || {
-    log_error "plowup: unsupported module (${COMMAND_LINE_ARGS[0]})";
-    exit $ERR_NOMODULE;
-}
+if ! MODULE=$(module_exist MODULES[@] "${COMMAND_LINE_ARGS[0]}"); then
+    log_error "plowup: unsupported module (${COMMAND_LINE_ARGS[0]})"
+    log_error "plowup: try \`plowup --modules' to see available modules."
+    exit $ERR_NOMODULE
+fi
 
 if [ ${#COMMAND_LINE_ARGS[@]} -lt 2 ]; then
     log_error 'plowup: you must specify a filename.'

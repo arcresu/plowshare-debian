@@ -303,10 +303,11 @@ first_line() {
     local -r N=${1:-1}
 
     if (( N < 1 )); then
+        log_error "$FUNCNAME: negative index not expected"
         return $ERR_FATAL
     fi
 
-    # equivalent to `sed -ne 1p` or `sed -e q` or `sed -e 1q` (N=1 here)
+    # Equivalent to `sed -ne 1p` or `sed -e q` or `sed -e 1q` (N=1 here)
     head -n$((N))
 }
 
@@ -317,10 +318,11 @@ last_line() {
     local -r N=${1:-1}
 
     if (( N < 1 )); then
+        log_error "$FUNCNAME: negative index not expected"
         return $ERR_FATAL
     fi
 
-    # equivalent to `sed -ne '$p'` or `sed -e '$!d'` (N=1 here)
+    # Equivalent to `sed -ne '$p'` or `sed -e '$!d'` (N=1 here)
     tail -n$((N))
 }
 
@@ -328,8 +330,15 @@ last_line() {
 # stdin: input string (multiline)
 # $1: line number (start at index 1)
 nth_line() {
-   # equivalent to `sed -e "${1}q;d"` or `sed -e "${1}!d"`
-   sed -ne "${1}p"
+    local -r N=${1:-1}
+
+    if (( N < 1 )); then
+        log_error "$FUNCNAME: negative index not expected"
+        return $ERR_FATAL
+    fi
+
+    # Equivalent to `sed -e "${1}q;d"` or `sed -e "${1}!d"`
+    sed -ne "$((N))p"
 }
 
 # Delete fist line(s) of a buffer
@@ -339,10 +348,11 @@ delete_first_line() {
     local -r N=${1:-1}
 
     if (( N < 1 )); then
+        log_error "$FUNCNAME: negative index not expected"
         return $ERR_FATAL
     fi
 
-    # equivalent to `tail -n +2` (if $1=1)
+    # Equivalent to `tail -n +2` (if $1=1)
     sed -ne "$((N+1)),\$p"
 }
 
@@ -1109,8 +1119,13 @@ get_filesize() {
 create_tempfile() {
     local -r SUFFIX=$1
     local FILE="$TMPDIR/$(basename_file "$0").$$.$RANDOM$SUFFIX"
-    :> "$FILE" || return $ERR_SYSTEM
-    echo "$FILE"
+
+    if touch "$FILE" && chmod 600 "$FILE"; then
+        echo "$FILE"
+        return 0
+    fi
+
+    return $ERR_SYSTEM
 }
 
 # User password entry
@@ -2432,7 +2447,10 @@ storage_set() {
     else
         CONFIG="$PLOWSHARE_CONFDIR/storage"
 
-        [ -d "$CONFIG" ] || mkdir --parents "$CONFIG"
+        if [ ! -d "$CONFIG" ]; then
+            mkdir --parents "$CONFIG"
+            chmod 700 "$CONFIG"
+        fi
 
         if [ ! -w "$CONFIG" ]; then
           log_error "$FUNCNAME: write permissions expected \`$CONFIG'"
@@ -2448,6 +2466,9 @@ storage_set() {
             return $ERR_SYSTEM
         fi
         source "$CONFIG"
+    else
+        touch "$CONFIG"
+        chmod 600 "$CONFIG"
     fi
 
     # Unset parameter and empty string are different
@@ -2568,10 +2589,10 @@ exit_handler() {
 # Install exit handler
 set_exit_trap() {
     if [ -z "$TMPDIR" ]; then
-        log_error 'Error: TMPDIR is not defined.'
+        log_error 'ERROR: $TMPDIR is not defined.'
         return $ERR_SYSTEM
     elif [ ! -d "$TMPDIR" ]; then
-        log_error 'Error: TMPDIR is not a directory.'
+        log_error 'ERROR: $TMPDIR is not a directory.'
         return $ERR_SYSTEM
     fi
     trap exit_handler EXIT
@@ -2711,19 +2732,27 @@ process_module_options() {
 # $2 (optional): feature to subtract (must not contain '|' char)
 # stdout: declare an associative array (MODULES_PATH)
 get_all_modules_list() {
-    local -a SRCS=( "$LIBDIR" "$PLOWSHARE_CONFDIR" )
+    # Legacy locations are kept for compatibility
+    local -a SRCS=( "$LIBDIR/modules" "$PLOWSHARE_CONFDIR/modules" )
     local -A MODULES_PATH=()
     local D CONFIG
 
+    if [ -d "$PLOWSHARE_CONFDIR/modules.d/" ]; then
+        while read -r; do
+            D=$(dirname "$REPLY")
+            SRCS+=( "$D" )
+        done < <(find "$PLOWSHARE_CONFDIR/modules.d/" -mindepth 2 -maxdepth 2 -name config)
+    fi
+
     for D in "${SRCS[@]}"; do
-        CONFIG="$D/modules/config"
-        if [[ -d "$D/modules" && -f "$CONFIG" ]]; then
+        CONFIG="$D/config"
+        if [[ -d "$D" && -f "$CONFIG" ]]; then
             while read -r; do
-                if [ -f "$D/modules/$REPLY.sh" ]; then
+                if [ -f "$D/$REPLY.sh" ]; then
                     if [[ ${MODULES_PATH["$REPLY"]} ]]; then
                         stderr "INFO: $CONFIG: \`$REPLY\` module overwrite, this one is taken"
                     fi
-                    MODULES_PATH[$REPLY]="$D/modules/$REPLY.sh"
+                    MODULES_PATH[$REPLY]="$D/$REPLY.sh"
                 else
                     stderr "ERROR: $CONFIG: \`$REPLY\` module not found, ignoring"
                 fi
@@ -2737,7 +2766,7 @@ get_all_modules_list() {
 }
 
 # $1: section name in ini-style file ("General" will be considered too)
-# $2: command-line arguments list
+# $2: command-line argument list
 # $3 (optional): user specified configuration file
 # Note: VERBOSE (log_debug) not initialised yet
 process_configfile_options() {
@@ -2767,7 +2796,7 @@ process_configfile_options() {
             [[ $NAME = */* ]] && continue
 
             # Look for optional double quote (protect leading/trailing spaces)
-            if [ '"' = "${VALUE:0:1}" -a '"' = "${VALUE:(-1):1}" ]; then
+            if [ ${#VALUE} -gt 1 ] && [ '"' = "${VALUE:0:1}" -a '"' = "${VALUE:(-1):1}" ]; then
                 VALUE=${VALUE%?}
                 VALUE=${VALUE:1}
             fi
@@ -2791,23 +2820,26 @@ process_configfile_module_options() {
 
     if [ -z "$4" ]; then
         CONFIG="$PLOWSHARE_CONFDIR/plowshare.conf"
-        if [ -f "$CONFIG" ]; then
-            if [ -O "$CONFIG" ]; then
-                # First 10 characters: access rights (human readable form)
-                local FILE_PERM=$(ls -l "$CONFIG" 2>/dev/null)
-
-                if [[ ${FILE_PERM:4:6} != '------' ]]; then
-                    log_notice "Warning (configuration file permissions): chmod 600 $CONFIG"
-                fi
-            else
-                log_notice "Warning (configuration file ownership): chown $USERNAME $CONFIG"
-            fi
-        else
-            CONFIG='/etc/plowshare.conf'
-            test -f "$CONFIG" || return 0
-        fi
+        test -f "$CONFIG" || CONFIG='/etc/plowshare.conf'
+        test -f "$CONFIG" || return 0
     else
         CONFIG=$4
+    fi
+
+    # Security check
+    if [ -f "$CONFIG" ]; then
+        if [ -O "$CONFIG" ]; then
+            # First 10 characters: access rights (human readable form)
+            local FILE_PERM=$(ls -l "$CONFIG" 2>/dev/null)
+
+            if [[ ${FILE_PERM:4:6} != '------' ]]; then
+                log_notice "WARNING: Wrong configuration file permissions. Fix it with: chmod 600 $CONFIG"
+            fi
+        else
+            log_notice "WARNING: Bad configuration file ownership. Fix it with: chown $USER $CONFIG"
+        fi
+    else
+        return 0
     fi
 
     log_report "use $CONFIG"
@@ -2833,7 +2865,7 @@ process_configfile_module_options() {
                 VALUE=$(strip <<< "${LINE#*=}")
 
                 # Look for optional double quote (protect leading/trailing spaces)
-                if [ '"' = "${VALUE:0:1}" -a '"' = "${VALUE:(-1):1}" ]; then
+                if [ ${#VALUE} -gt 1 ] && [ '"' = "${VALUE:0:1}" -a '"' = "${VALUE:(-1):1}" ]; then
                     VALUE=${VALUE%?}
                     VALUE=${VALUE:1}
                 fi
@@ -2876,9 +2908,9 @@ log_report_info() {
             fi
         done
 
-        GIT_DIR=$(cd "$LIBDIR" && git rev-parse --git-dir 2>/dev/null) || true
+        GIT_DIR=$(git --work-tree "$LIBDIR" rev-parse --quiet --git-dir) || true
         if [ -d "$GIT_DIR" ]; then
-            local -r GIT_BRANCH=$(git --git-dir=$GIT_DIR rev-parse --abbrev-ref HEAD 2>/dev/null)
+            local -r GIT_BRANCH=$(git --git-dir=$GIT_DIR rev-parse --quiet --abbrev-ref HEAD)
             local -r GIT_REV=$(git --git-dir=$GIT_DIR describe --tags --always 2>/dev/null)
             log_report "[git ] $GIT_REV ($GIT_BRANCH branch)"
         fi
@@ -2932,7 +2964,7 @@ captcha_method_translate() {
             [[ $3 ]] && unset "$3" && eval $3=view-fb,log
             ;;
         *)
-            log_error "Error: unknown captcha method '$1'.${DISPLAY:+ Try with 'x11' for example.}"
+            log_error "ERROR: Unknown captcha method '$1'.${DISPLAY:+ Try with 'x11' for example.}"
             return $ERR_FATAL
             ;;
     esac
@@ -3866,20 +3898,21 @@ log_notice_norc() {
 }
 
 # Bash4 builtin error-handling function
+# VERBOSE is not defined here.
 command_not_found_handle() {
     local -r CMD=$1
     local ERR=$ERR_SYSTEM
 
     # Missing module function
     if [[ $CMD =~ _(delete|download|list|probe|upload)$ ]]; then
-        log_error "$MODULE module: \`$CMD' function was not found"
+        stderr "$MODULE module: \`$CMD' function was not found"
     else
         [ "$CMD" = 'curl' ] && ERR=62
-        log_error "$CMD: command not found"
+        stderr "$CMD: command not found"
     fi
 
     shift
-    log_debug "with arguments: $*"
+    stderr "called with arguments: $*"
 
     return $ERR
 }
