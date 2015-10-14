@@ -11,7 +11,8 @@ plowshare (2.1.0-1) unstable; urgency=medium
   * debian/gbp.conf, debian/get-version, debian/rules:
     - Remove dependency on git history from the build process.
 
-  * debian/plowshare.completion: install completion for each command.
+  * debian/plowshare.completion, debian/rules:
+    - Install completion for each command.
 
   * debian/plowshare.links, debian/plowshare.manpages: sort alphabetically.
 
