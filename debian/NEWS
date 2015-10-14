@@ -5,6 +5,12 @@ plowshare (2.1.0-1) unstable; urgency=medium
   plowshare-modules package, but note that it will result in the execution of
   arbitrary code downloaded from the Internet. See README.Debian for details.
 
+  This version also adds support for user modules which can be installed at
+
+      ~/.config/plowshare/modules.d/MODULE_NAME.sh
+
+  so that you can test new modules. Consider contributing them upstream!
+
  -- Carl Suster <carl@contraflo.ws>  Wed, 14 Oct 2015 15:33:28 +0200
 
 plowshare (2.0.1-1) unstable; urgency=medium
@@ -12,7 +18,9 @@ plowshare (2.0.1-1) unstable; urgency=medium
   Upstream has split the plowshare modules into a separate repository and has
   decided not to maintain them as carefully as before. A new package called
   plowshare-modules will package snapshots of this new repository:
-  https://github.com/mcrapet/plowshare-modules-legacy
+
+      https://github.com/mcrapet/plowshare-modules-legacy
+
   There will be a tool included with future versions of plowshare to help with
   manually updating a local copy of the scripts, which you can do instead of
   using this new package if you want faster updates.

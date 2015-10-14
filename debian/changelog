@@ -1,10 +1,9 @@
 plowshare (2.1.0-1) unstable; urgency=medium
 
   * New upstream release.
-    - adds support for user modules.
-    - adds plowmod for manual module updating.
-    - debian/rules: install new upstream changelog.
+    - debian/NEWS: note support for user modules.
     - debian/NEWS, debian/README: note the new plowmod tool.
+    - debian/rules: install new upstream changelog.
     - debian/plowshare.links, debian/plowshare.manpages: add plowmod.
     - debian/plowshare.docs: README -> README.md.
 
