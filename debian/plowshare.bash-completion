@@ -1,1 +1,5 @@
-scripts/plowshare.completion plowshare
+scripts/plowshare.completion plowdel
+scripts/plowshare.completion plowdown
+scripts/plowshare.completion plowlist
+scripts/plowshare.completion plowprobe
+scripts/plowshare.completion plowup

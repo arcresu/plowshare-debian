@@ -1,5 +1,5 @@
-usr/share/plowshare/download.sh usr/bin/plowdown
-usr/share/plowshare/upload.sh usr/bin/plowup
 usr/share/plowshare/delete.sh usr/bin/plowdel
+usr/share/plowshare/download.sh usr/bin/plowdown
 usr/share/plowshare/list.sh usr/bin/plowlist
 usr/share/plowshare/probe.sh usr/bin/plowprobe
+usr/share/plowshare/upload.sh usr/bin/plowup
