@@ -16,7 +16,8 @@ plowshare (2.1.2-1) unstable; urgency=medium
 
   * debian/plowshare.links, debian/plowshare.manpages: sort alphabetically.
 
-  * debian/plowshare.install: no longer install dummy module config file.
+  * debian/plowshare.install:
+    - no longer install dummy module config file (Closes: #801815).
 
  -- Carl Suster <carl@contraflo.ws>  Wed, 14 Oct 2015 15:33:28 +0200
 
