@@ -1,4 +1,7 @@
-Author: Carl Suster <carl@contraflo.ws>
+From: Carl Suster <carl@contraflo.ws>
+Date: Tue, 5 Jan 2016 23:57:58 +0100
+Subject: disable-javascript
+
 Bug-Debian: http://bugs.debian.org/791467
 Description: Disable javascript execution
  Plowshare uses rhino CLI to execute javascript downloaded from the Internet.
@@ -8,12 +11,15 @@ Description: Disable javascript execution
  Some modules will be broken by this change, but since the modules will break
  anyway it is expected that most users will be using a more recent version of
  this package, and in future less aggressive fixes will be investigated.
+---
+ src/core.sh | 24 ++++++------------------
+ 1 file changed, 6 insertions(+), 18 deletions(-)
 
-Index: plowshare/src/core.sh
-===================================================================
---- plowshare.orig/src/core.sh
-+++ plowshare/src/core.sh
-@@ -1175,34 +1175,22 @@ post_login() {
+diff --git a/src/core.sh b/src/core.sh
+index 4181123..eb77f31 100644
+--- a/src/core.sh
++++ b/src/core.sh
+@@ -1207,34 +1207,22 @@ post_login() {
      fi
  }
  

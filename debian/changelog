@@ -25,6 +25,9 @@ plowshare (2.1.2-1) unstable; urgency=medium
   * debian/rules:
     - Trap errors in shell script loops.
 
+  * patches/*:
+    - Re-export patched using gbp pq without changes.
+
  -- Carl Suster <carl@contraflo.ws>  Wed, 14 Oct 2015 15:33:28 +0200
 
 plowshare (2.0.1-1) unstable; urgency=medium
