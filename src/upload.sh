@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Upload files to file sharing websites
-# Copyright (c) 2010-2014 Plowshare team
+# Copyright (c) 2010-2015 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -22,21 +22,23 @@ declare -r VERSION='GIT-snapshot'
 
 declare -r EARLY_OPTIONS="
 HELP,h,help,,Show help info and exit
-HELPFULL,H,longhelp,,Exhaustive help info (with modules command-line options)
+HELPFUL,H,longhelp,,Exhaustive help info (with modules command-line options)
 GETVERSION,,version,,Output plowup version information and exit
 ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
 EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
 NO_PLOWSHARERC,,no-plowsharerc,,Do not use any plowshare.conf configuration file"
 
 declare -r MAIN_OPTIONS="
-VERBOSE,v,verbose,V=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
+VERBOSE,v,verbose,c|0|1|2|3|4=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
 QUIET,q,quiet,,Alias for -v0
 MAX_LIMIT_RATE,,max-rate,r=SPEED,Limit maximum speed to bytes/sec (accept usual suffixes)
 MIN_LIMIT_RATE,,min-rate,r=SPEED,Limit minimum speed to bytes/sec (during 30 seconds)
 INTERFACE,i,interface,s=IFACE,Force IFACE network interface
 TIMEOUT,t,timeout,n=SECS,Timeout after SECS seconds of waits
 MAXRETRIES,r,max-retries,N=NUM,Set maximum retries for upload failures (fatal, network errors). Default is 0 (no retry).
-NAME_FORMAT,,name,s=FORMAT,Format destination filename (applies on each file argument). Default string is: \"%f\".
+NAME_FORMAT,,name,s=FORMAT,Format destination filename (applies on each file argument). Default is \"%f\".
+CACHE,,cache,C|none|session|shared=METHOD,Policy for storage data. Available: none, session (default), shared.
+TEMP_DIR,,temp-directory,D=DIR,Directory for temporary files (cookies, images)
 CAPTCHA_METHOD,,captchamethod,s=METHOD,Force specific captcha solving method. Available: online, imgur, x11, fb, nox, none.
 CAPTCHA_PROGRAM,,captchaprogram,F=PROGRAM,Call external program/script for captcha solving.
 CAPTCHA_9KWEU,,9kweu,s=KEY,9kw.eu captcha (API) key
@@ -44,8 +46,9 @@ CAPTCHA_ANTIGATE,,antigate,s=KEY,Antigate.com captcha key
 CAPTCHA_BHOOD,,captchabhood,a=USER:PASSWD,CaptchaBrotherhood account
 CAPTCHA_COIN,,captchacoin,s=KEY,captchacoin.com API key
 CAPTCHA_DEATHBY,,deathbycaptcha,a=USER:PASSWD,DeathByCaptcha account
-PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful upload). Default string is: \"%D%A%u%n\".
-TEMP_DIR,,temp-directory,D=DIR,Directory for temporary files (cookies, images)
+PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful upload). Default is \"%L%M%u%n\".
+NO_COLOR,,no-color,,Disables log notice & log error output coloring
+EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
 NO_CURLRC,,no-curlrc,,Do not use curlrc config file"
 
 
@@ -73,19 +76,19 @@ absolute_path() {
 }
 
 # Print usage (on stdout)
-# Note: $MODULES is a multi-line list
+# Note: Global array variable MODULES is accessed directly.
 usage() {
     echo 'Usage: plowup [OPTIONS] MODULE [MODULE_OPTIONS] URL|FILE[:DESTNAME]...'
     echo 'Upload files to file sharing websites.'
     echo
     echo 'Global options:'
     print_options "$EARLY_OPTIONS$MAIN_OPTIONS"
-    test -z "$1" || print_module_options "$MODULES" UPLOAD
+    test -z "$1" || print_module_options MODULES[@] UPLOAD
 }
 
 # Check if module name is contained in list
 #
-# $1: module name list (one per line)
+# $1: module list (array name)
 # $2: module name
 # $?: zero for found, non zero otherwie
 # stdout: lowercase module name (if found)
@@ -94,12 +97,12 @@ module_exist() {
     local N2=${N1//./_}
     local MODULE
 
-    while read MODULE; do
-        if [[ $N1 = $MODULE || $N2 = $MODULE ]]; then
+    for MODULE in "${!1}"; do
+        if [[ $N1 = "$MODULE" || $N2 = "$MODULE" ]]; then
             echo "$MODULE"
             return 0
         fi
-    done <<< "$1"
+    done
     return 1
 }
 
@@ -115,13 +118,16 @@ module_config_remote_upload() {
 # Interpreted sequences are:
 # %f: destination (remote) filename
 # %u: download url
+# %U: download url (JSON string)
 # %d: delete url
+# %D: delete url (JSON string)
 # %a: admin url/code
+# %A: admin url/code (JSON string)
 # %l: source (local) filename
 # %m: module name
 # %s: filesize (in bytes)
-# %D: alias for "#DEL %d%n" or empty string (if %d is empty)
-# %A: alias for "#ADM %a%n" or empty string (if %a is empty)
+# %L: alias for "#DEL %d%n" or empty string (if %d is empty)
+# %M: alias for "#ADM %a%n" or empty string (if %a is empty)
 # and also:
 # %n: newline
 # %t: tabulation
@@ -133,7 +139,7 @@ module_config_remote_upload() {
 pretty_check() {
     # This must be non greedy!
     local S TOKEN
-    S=${1//%[fudalmsADnt%]}
+    S=${1//%[fuUdDaAlmsLMnt%]}
     TOKEN=$(parse_quiet . '\(%.\)' <<< "$S")
     if [ -n "$TOKEN" ]; then
         log_error "Bad format string: unknown sequence << $TOKEN >>"
@@ -150,28 +156,29 @@ pretty_print() {
 
     test "${FMT#*%%}" != "$FMT" && FMT=$(replace_all '%%' "%raw" <<< "$FMT")
 
-    if test "${FMT#*%D}" != "$FMT"; then
+    if test "${FMT#*%L}" != "$FMT"; then
         if [ -z "${A[4]}" ]; then
-            FMT=${FMT//%D/}
+            FMT=${FMT//%L/}
         else
-            FMT=$(replace_all '%D' "#DEL %d%n" <<< "$FMT")
+            FMT=$(replace_all '%L' "#DEL %d%n" <<< "$FMT")
         fi
     fi
 
-    if test "${FMT#*%A}" != "$FMT"; then
+    if test "${FMT#*%M}" != "$FMT"; then
         if [ -z "${A[5]}" ]; then
-            FMT=${FMT//%A/}
+            FMT=${FMT//%M/}
         else
-            FMT=$(replace_all '%A' "#ADM %a%n" <<< "$FMT")
+            FMT=$(replace_all '%M' "#ADM %a%n" <<< "$FMT")
         fi
     fi
 
     test "${FMT#*%s}" != "$FMT" && \
-        FMT=$(replace_all '%s' $(get_filesize "${A[1]}") <<< "$FMT")
+        FMT=$(replace_all '%s' "$(get_filesize "${A[1]}")" <<< "$FMT")
 
     handle_tokens "$FMT" '%raw,%' '%t,	' "%n,$CR" \
         "%m,${A[0]}" "%l,${A[1]}" "%f,${A[2]}" "%u,${A[3]}" \
-        "%d,${A[4]}" "%a,${A[5]}"
+        "%d,${A[4]}" "%a,${A[5]}" "%U,$(json_escape "${A[3]}")" \
+        "%D,$(json_escape "${A[4]}")" "%A,$(json_escape "${A[5]}")"
 }
 
 # Filename (arguments) printf format
@@ -215,10 +222,10 @@ pretty_name_print() {
     test "${FMT#*%%}" != "$FMT" && FMT=$(replace_all '%%' "%raw" <<< "$FMT")
 
     test "${FMT#*%s}" != "$FMT" && \
-        FMT=$(replace_all '%s' $(get_filesize "${A[1]}") <<< "$FMT")
+        FMT=$(replace_all '%s' "$(get_filesize "${A[1]}")" <<< "$FMT")
 
     test "${FMT#*%h}" != "$FMT" && \
-        FMT=$(replace_all '%h' $(md5_file "${A[1]}") <<< "$FMT")
+        FMT=$(replace_all '%h' "$(md5_file "${A[1]}")" <<< "$FMT")
 
     handle_tokens "$FMT" '%raw,%' \
         "%m,${A[0]}" "%l,${A[1]}" "%f,${A[2]}" \
@@ -243,24 +250,29 @@ fi
 
 # Get library directory
 LIBDIR=$(absolute_path "$0")
+readonly LIBDIR
+TMPDIR=${TMPDIR:-/tmp}
 
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-MODULES=$(get_all_modules_list 'upload') || exit
-for MODULE in $MODULES; do
-    source "$LIBDIR/modules/$MODULE.sh"
+
+declare -a MODULES=()
+eval "$(get_all_modules_list upload)" || exit
+for MODULE in "${!MODULES_PATH[@]}"; do
+    source "${MODULES_PATH[$MODULE]}"
+    MODULES+=("$MODULE")
 done
 
 # Process command-line (plowup early options)
 eval "$(process_core_options 'plowup' "$EARLY_OPTIONS" "$@")" || exit
 
-test "$HELPFULL" && { usage 1; exit 0; }
+test "$HELPFUL" && { usage 1; exit 0; }
 test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
 if test "$ALLMODULES"; then
-    for MODULE in $MODULES; do echo "$MODULE"; done
+    for MODULE in "${MODULES[@]}"; do echo "$MODULE"; done
     exit 0
 fi
 
@@ -282,13 +294,30 @@ elif [ -z "$VERBOSE" ]; then
     declare -r VERBOSE=2
 fi
 
+if [ -n "$NO_COLOR" ]; then
+    unset COLOR
+else
+    declare -r COLOR=yes
+fi
+
+if [ "${#MODULES}" -le 0 ]; then
+    log_error \
+"-------------------------------------------------------------------------------
+Your plowshare installation has currently no module.
+($PLOWSHARE_CONFDIR/modules.d/ is empty)
+
+In order to use plowup you must install some modules. Here is a quick start:
+$ plowmod --install
+-------------------------------------------------------------------------------"
+fi
+
 if [ $# -lt 1 ]; then
     log_error 'plowup: no module specified!'
     log_error "plowup: try \`plowup --help' for more information."
     exit $ERR_BAD_COMMAND_LINE
 fi
 
-log_report_info
+log_report_info "$LIBDIR"
 log_report "plowup version $VERSION"
 
 if [ -n "$EXT_PLOWSHARERC" ]; then
@@ -333,11 +362,17 @@ else
     [ -n "$CAPTCHA_DEATHBY" ] && log_debug 'plowup: --deathbycaptcha selected'
 fi
 
-if [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
+if [ -n "$EXT_CURLRC" ]; then
+    if [ -n "$NO_CURLRC" ]; then
+        log_notice 'plowup: --no-curlrc selected and prevails over --curlrc'
+    else
+        log_notice 'plowup: using alternate curl configuration file'
+    fi
+elif [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
     log_debug 'using local ~/.curlrc'
 fi
 
-MODULE_OPTIONS=$(get_all_modules_options "$MODULES" UPLOAD)
+MODULE_OPTIONS=$(get_all_modules_options MODULES[@] UPLOAD)
 
 # Process command-line (all module options)
 eval "$(process_all_modules_options 'plowup' "$MODULE_OPTIONS" \
@@ -354,10 +389,11 @@ if [ ${#COMMAND_LINE_ARGS[@]} -eq 0 ]; then
 fi
 
 # Check requested module
-MODULE=$(module_exist "$MODULES" "${COMMAND_LINE_ARGS[0]}") || {
-    log_error "plowup: unsupported module (${COMMAND_LINE_ARGS[0]})";
-    exit $ERR_NOMODULE;
-}
+if ! MODULE=$(module_exist MODULES[@] "${COMMAND_LINE_ARGS[0]}"); then
+    log_error "plowup: unsupported module (${COMMAND_LINE_ARGS[0]})"
+    log_error "plowup: try \`plowup --modules' to see available modules."
+    exit $ERR_NOMODULE
+fi
 
 if [ ${#COMMAND_LINE_ARGS[@]} -lt 2 ]; then
     log_error 'plowup: you must specify a filename.'
@@ -373,7 +409,7 @@ eval "$(process_module_options "$MODULE" UPLOAD \
     "${COMMAND_LINE_MODULE_OPTS[@]}")" || true
 
 if [ ${#UNUSED_OPTS[@]} -ne 0 ]; then
-    log_notice "Unused option(s): ${UNUSED_OPTS[@]}"
+    log_notice "Unused option(s): ${UNUSED_OPTS[*]}"
 fi
 
 # Remove module name from argument list
@@ -450,6 +486,12 @@ for FILE in "${COMMAND_LINE_ARGS[@]}"; do
     timeout_init $TIMEOUT
 
     TRY=0
+
+    # Module storage policy (part 1/2)
+    if [ "$CACHE" = 'none' ]; then
+        storage_reset
+    fi
+
     ${MODULE}_vars_set
 
     while :; do
@@ -466,6 +508,13 @@ for FILE in "${COMMAND_LINE_ARGS[@]}"; do
                 log_debug 'arbitrary wait (from module)'
             fi
             wait ${AWAIT:-60} || { URETVAL=$?; break; }
+
+            # Unspecified retry but this error does not count as a retry
+            if [[ $MAXRETRIES -eq 0 ]]; then
+                log_notice "Starting upload ($MODULE): retry (after wait request)"
+                continue
+            fi
+
         elif [[ $MAXRETRIES -eq 0 ]]; then
             break
         elif [ $URETVAL -ne $ERR_FATAL -a $URETVAL -ne $ERR_NETWORK -a \
@@ -497,7 +546,7 @@ for FILE in "${COMMAND_LINE_ARGS[@]}"; do
 
             DATA=("$MODULE" "$LOCALFILE" "$DESTFILE" \
                   "$DL_URL" "$DEL_URL" "$ADMIN_URL_OR_CODE")
-            pretty_print DATA[@] "${PRINTF_FORMAT:-%D%A%u%n}"
+            pretty_print DATA[@] "${PRINTF_FORMAT:-%L%M%u%n}"
         else
             log_error 'Output URL expected'
             URETVAL=$ERR_FATAL
@@ -522,6 +571,11 @@ for FILE in "${COMMAND_LINE_ARGS[@]}"; do
     RETVALS=(${RETVALS[@]} $URETVAL)
 done
 
+# Module storage policy (part 2/2)
+if [ "$CACHE" != 'shared' ]; then
+    storage_reset
+fi
+
 rm -f "$UCOOKIE" "$URESULT"
 
 if [ ${#RETVALS[@]} -eq 0 ]; then
@@ -529,7 +583,7 @@ if [ ${#RETVALS[@]} -eq 0 ]; then
 elif [ ${#RETVALS[@]} -eq 1 ]; then
     exit ${RETVALS[0]}
 else
-    log_debug "retvals:${RETVALS[@]}"
+    log_debug "retvals:${RETVALS[*]}"
     # Drop success values
     RETVALS=(${RETVALS[@]/#0*} -$ERR_FATAL_MULTIPLE)
 

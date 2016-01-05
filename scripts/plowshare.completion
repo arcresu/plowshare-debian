@@ -1,4 +1,4 @@
-# plowshare4 completion                                    -*- shell-script -*-
+# plowshare completion                                    -*- shell-script -*-
 
 _plowup()
 {
@@ -18,7 +18,11 @@ _plowup()
             # argument required but no completion available
             return 0
             ;;
-        --captchaprogram|--plowsharerc)
+        --cache)
+            COMPREPLY=( $( compgen -W 'none session shared' -- $cur ) )
+            return 0
+            ;;
+        --captchaprogram|--plowsharerc|--curlrc)
             _filedir
             return 0
             ;;
@@ -41,26 +45,42 @@ _plowup()
     if [[ $cur = -* ]]; then
         COMPREPLY=( $( compgen -W '--help --longhelp --version --quiet --verbose \
             -v -q -i -t -r \
-            --min-rate --max-rate --interface --max-retries --timeout --name \
+            --min-rate --max-rate --interface --max-retries --timeout --name --cache \
             --captchamethod --captchaprogram --9kweu --antigate --captchabhood --captchacoin --deathbycaptcha \
-            --temp-directory --printf --no-curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
+            --temp-directory --printf --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
     else
-        local m i list
-        list=$(sed -ne '/^[^#].*|[[:space:]]*upload[[:space:]]*|/p' \
-            /usr/local/share/plowshare4/modules/config | cut -d'|' -f1)
-
-        # check for already given module name
-        # note: _get_first_arg is not accurate enough (option with argument)
-        for m in $list; do
-            for (( i=1; i < ${#COMP_WORDS[@]}-1; i++ )); do
-                if [ "${COMP_WORDS[i]//./_}" = $m ]; then
-                    _filedir
-                    return 0
-                fi
-            done
+        local i files
+        for i in /usr/local/share/plowshare/modules/config \
+                $HOME/.config/plowshare/modules.d/*/config \
+                $HOME/.config/plowshare/modules/config; do
+            test -f $i && files+=($i)
         done
 
-        COMPREPLY=( $(compgen -W "$list" -- ${cur//./_} ) )
+        if [ ${#files[@]} -gt 0 ]; then
+            local m list
+
+            list=$(sed -ne '/^[^#].*|[[:space:]]*upload[[:space:]]*|/s/|.*//p' "${files[@]}" | sort -u)
+            if [[ $list ]]; then
+                # check for already given module name
+                # note: _get_first_arg is not accurate enough (option with argument)
+                for m in $list; do
+                    for (( i=1; i < ${#COMP_WORDS[@]}-1; i++ )); do
+                        if [ "${COMP_WORDS[i]//./_}" = $m ]; then
+                            _filedir
+                            return 0
+                        fi
+                    done
+                done
+
+                COMPREPLY=( $(compgen -W "$list" -- ${cur//./_} ) )
+            else
+                # no module found
+                _filedir
+            fi
+        else
+            # no config file found
+            _filedir
+        fi
     fi
 } &&
 complete -F _plowup plowup
@@ -87,11 +107,15 @@ _plowdown()
             _available_interfaces -a
             return 0
             ;;
+        --cache)
+            COMPREPLY=( $( compgen -W 'none session shared' -- $cur ) )
+            return 0
+            ;;
         --captchamethod)
             COMPREPLY=( $( compgen -W 'imgur none online fb nox x11' -- $cur ) )
             return 0
             ;;
-        --cookies|--captchaprogram|--run-before|--run-after|--plowsharerc)
+        --captchaprogram|--run-before|--run-after|--plowsharerc|--curlrc)
             _filedir
             return 0
             ;;
@@ -100,10 +124,10 @@ _plowdown()
     if [[ $cur = -* ]]; then
         COMPREPLY=( $( compgen -W '--help --longhelp --version --quiet --verbose \
             -v -q -i -o -m -r -t -x \
-            --min-space --max-rate --interface --mark-downloaded --no-overwrite \
+            --min-space --max-rate --interface --mark-downloaded --no-overwrite --cache \
             --output-directory --temp-directory --temp-rename --timeout --max-retries \
             --captchamethod --captchaprogram --9kweu --antigate --captchabhood --captchacoin --deathbycaptcha \
-            --fallback --cookies --printf --run-before --run-after --no-curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
+            --fallback --printf --run-before --run-after --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
     else
         _filedir
     fi
@@ -132,7 +156,7 @@ _plowdel()
             COMPREPLY=( $( compgen -W 'imgur none online fb nox x11' -- $cur ) )
             return 0
             ;;
-        --captchaprogram|--plowsharerc)
+        --captchaprogram|--plowsharerc|--curlrc)
             _filedir
             return 0
             ;;
@@ -140,8 +164,9 @@ _plowdel()
 
     if [[ $cur = -* ]]; then
         COMPREPLY=( $( compgen -W '--help --longhelp --version --quiet --verbose \
-            --9kweu --antigate --captchabhood --captchacoin --deathbycaptcha --captchamethod --captchaprogram \
-            -v -q -i --interface --no-plowsharerc --plowsharerc' -- $cur ) )
+            -v -q -i \
+            --captchamethod --captchaprogram --9kweu --antigate --captchabhood --captchacoin --deathbycaptcha \
+            --interface --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
     else
         # URL pattern expected
         _filedir
@@ -167,7 +192,7 @@ _plowlist()
             _available_interfaces -a
             return 0
             ;;
-        --plowsharerc)
+        --plowsharerc|--curlrc)
             _filedir
             return 0
             ;;
@@ -175,7 +200,8 @@ _plowlist()
 
     if [[ $cur = -* ]]; then
         COMPREPLY=( $( compgen -W '--help --longhelp --version --quiet --verbose \
-            -v -q -i -R --interface --printf --recursive --fallback --no-plowsharerc --plowsharerc' -- $cur ) )
+            -v -q -i -R \
+            --interface --printf --recursive --fallback --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
     else
         # URL pattern expected
         _filedir
@@ -201,7 +227,7 @@ _plowprobe()
             _available_interfaces -a
             return 0
             ;;
-        --plowsharerc)
+        --plowsharerc|--curlrc)
             _filedir
             return 0
             ;;
@@ -209,7 +235,7 @@ _plowprobe()
 
     if [[ $cur = -* ]]; then
         COMPREPLY=( $( compgen -W '--help --longhelp --version --quiet --verbose \
-            -v -q -i --get-module --interface --printf --follow --no-curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
+            -v -q -i --get-module --interface --printf --follow --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
     else
         # URL pattern expected
         _filedir

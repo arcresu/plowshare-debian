@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Delete files from file sharing websites
-# Copyright (c) 2010-2013 Plowshare team
+# Copyright (c) 2010-2015 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -22,14 +22,14 @@ declare -r VERSION='GIT-snapshot'
 
 declare -r EARLY_OPTIONS="
 HELP,h,help,,Show help info and exit
-HELPFULL,H,longhelp,,Exhaustive help info (with modules command-line options)
+HELPFUL,H,longhelp,,Exhaustive help info (with modules command-line options)
 GETVERSION,,version,,Output plowdel version information and exit
 ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
 EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
 NO_PLOWSHARERC,,no-plowsharerc,,Do not use any plowshare.conf configuration file"
 
 declare -r MAIN_OPTIONS="
-VERBOSE,v,verbose,V=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
+VERBOSE,v,verbose,c|0|1|2|3|4=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
 QUIET,q,quiet,,Alias for -v0
 INTERFACE,i,interface,s=IFACE,Force IFACE network interface
 CAPTCHA_METHOD,,captchamethod,s=METHOD,Force specific captcha solving method. Available: online, imgur, x11, fb, nox, none.
@@ -38,7 +38,11 @@ CAPTCHA_9KWEU,,9kweu,s=KEY,9kw.eu captcha (API) key
 CAPTCHA_ANTIGATE,,antigate,s=KEY,Antigate.com captcha key
 CAPTCHA_BHOOD,,captchabhood,a=USER:PASSWD,CaptchaBrotherhood account
 CAPTCHA_COIN,,captchacoin,s=KEY,captchacoin.com API key
-CAPTCHA_DEATHBY,,deathbycaptcha,a=USER:PASSWD,DeathByCaptcha account"
+CAPTCHA_DEATHBY,,deathbycaptcha,a=USER:PASSWD,DeathByCaptcha account
+NO_COLOR,,no-color,,Disables log notice & log error output coloring
+EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
+NO_CURLRC,,no-curlrc,,Do not use curlrc config file"
+
 
 # This function is duplicated from download.sh
 absolute_path() {
@@ -64,14 +68,14 @@ absolute_path() {
 }
 
 # Print usage (on stdout)
-# Note: $MODULES is a multi-line list
+# Note: Global array variable MODULES is accessed directly.
 usage() {
     echo 'Usage: plowdel [OPTIONS] [MODULE_OPTIONS] URL...'
     echo 'Delete files from file sharing websites links.'
     echo
     echo 'Global options:'
     print_options "$EARLY_OPTIONS$MAIN_OPTIONS"
-    test -z "$1" || print_module_options "$MODULES" DELETE
+    test -z "$1" || print_module_options MODULES[@] DELETE
 }
 
 #
@@ -80,24 +84,29 @@ usage() {
 
 # Get library directory
 LIBDIR=$(absolute_path "$0")
+readonly LIBDIR
+TMPDIR=${TMPDIR:-/tmp}
 
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-MODULES=$(get_all_modules_list 'delete') || exit
-for MODULE in $MODULES; do
-    source "$LIBDIR/modules/$MODULE.sh"
+
+declare -a MODULES=()
+eval "$(get_all_modules_list delete)" || exit
+for MODULE in "${!MODULES_PATH[@]}"; do
+    source "${MODULES_PATH[$MODULE]}"
+    MODULES+=("$MODULE")
 done
 
 # Process command-line (plowdel early options)
 eval "$(process_core_options 'plowdel' "$EARLY_OPTIONS" "$@")" || exit
 
-test "$HELPFULL" && { usage 1; exit 0; }
+test "$HELPFUL" && { usage 1; exit 0; }
 test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
 if test "$ALLMODULES"; then
-    for MODULE in $MODULES; do echo "$MODULE"; done
+    for MODULE in "${MODULES[@]}"; do echo "$MODULE"; done
     exit 0
 fi
 
@@ -117,6 +126,12 @@ if [ -n "$QUIET" ]; then
     declare -r VERBOSE=0
 elif [ -z "$VERBOSE" ]; then
     declare -r VERBOSE=2
+fi
+
+if [ -n "$NO_COLOR" ]; then
+    unset COLOR
+else
+    declare -r COLOR=yes
 fi
 
 if [ $# -lt 1 ]; then
@@ -147,7 +162,17 @@ else
     [ -n "$CAPTCHA_DEATHBY" ] && log_debug 'plowdel: --deathbycaptcha selected'
 fi
 
-MODULE_OPTIONS=$(get_all_modules_options "$MODULES" DELETE)
+if [ -n "$EXT_CURLRC" ]; then
+    if [ -n "$NO_CURLRC" ]; then
+        log_notice 'plowdel: --no-curlrc selected and prevails over --curlrc'
+    else
+        log_notice 'plowdel: using alternate curl configuration file'
+    fi
+elif [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
+    log_debug 'using local ~/.curlrc'
+fi
+
+MODULE_OPTIONS=$(get_all_modules_options MODULES[@] DELETE)
 
 # Process command-line (all module options)
 eval "$(process_all_modules_options 'plowdel' "$MODULE_OPTIONS" \
@@ -170,7 +195,7 @@ DCOOKIE=$(create_tempfile) || exit
 for URL in "${COMMAND_LINE_ARGS[@]}"; do
     DRETVAL=0
 
-    MODULE=$(get_module "$URL" "$MODULES") || DRETVAL=$?
+    MODULE=$(get_module "$URL" MODULES[@]) || DRETVAL=$?
     if [ $DRETVAL -ne 0 ]; then
         if ! match_remote_url "$URL"; then
             log_error "Skip: not an URL ($URL)"
@@ -218,7 +243,7 @@ if [ ${#RETVALS[@]} -eq 0 ]; then
 elif [ ${#RETVALS[@]} -eq 1 ]; then
     exit ${RETVALS[0]}
 else
-    log_debug "retvals:${RETVALS[@]}"
+    log_debug "retvals:${RETVALS[*]}"
     # Drop success values
     RETVALS=(${RETVALS[@]/#0*} -$ERR_FATAL_MULTIPLE)
 

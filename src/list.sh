@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Retrieve list of links from a shared-folder (sharing site) url
-# Copyright (c) 2010-2014 Plowshare team
+# Copyright (c) 2010-2015 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -22,19 +22,22 @@ declare -r VERSION='GIT-snapshot'
 
 declare -r EARLY_OPTIONS="
 HELP,h,help,,Show help info and exit
-HELPFULL,H,longhelp,,Exhaustive help info (with modules command-line options)
+HELPFUL,H,longhelp,,Exhaustive help info (with modules command-line options)
 GETVERSION,,version,,Output plowlist version information and exit
 ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
 EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
 NO_PLOWSHARERC,,no-plowsharerc,,Do not use any plowshare.conf configuration file"
 
 declare -r MAIN_OPTIONS="
-VERBOSE,v,verbose,V=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
+VERBOSE,v,verbose,c|0|1|2|3|4=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
 QUIET,q,quiet,,Alias for -v0
 INTERFACE,i,interface,s=IFACE,Force IFACE network interface
 RECURSE,R,recursive,,Recurse into sub folders
-PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each link). Default string is: \"%F%u%n\".
-NO_MODULE_FALLBACK,,fallback,,If no module is found for link, simply list all URLs contained in page"
+PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each link). Default is \"%F%u%n\".
+NO_COLOR,,no-color,,Disables log notice & log error output coloring
+NO_MODULE_FALLBACK,,fallback,,If no module is found for link, simply list all URLs contained in page
+EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
+NO_CURLRC,,no-curlrc,,Do not use curlrc config file"
 
 
 # This function is duplicated from download.sh
@@ -61,14 +64,14 @@ absolute_path() {
 }
 
 # Print usage (on stdout)
-# Note: $MODULES is a multi-line list
+# Note: Global array variable MODULES is accessed directly.
 usage() {
     echo 'Usage: plowlist [OPTIONS] [MODULE_OPTIONS] URL...'
     echo 'Retrieve list of links from folders (of file sharing websites).'
     echo
     echo 'Global options:'
     print_options "$EARLY_OPTIONS$MAIN_OPTIONS"
-    test -z "$1" || print_module_options "$MODULES" LIST
+    test -z "$1" || print_module_options MODULES[@] LIST
 }
 
 # Example: "MODULE_4SHARED_LIST_HAS_SUBFOLDERS=no"
@@ -84,6 +87,7 @@ module_config_has_subfolders() {
 # %f: filename (can be an empty string)
 # %F: alias for "# %f%n" or empty string if %f is empty
 # %u: download url
+# %U: download url (JSON string)
 # %m: module name
 # and also:
 # %n: newline
@@ -96,7 +100,7 @@ module_config_has_subfolders() {
 pretty_check() {
     # This must be non greedy!
     local S TOKEN
-    S=${1//%[fFumnt%]}
+    S=${1//%[fFuUmnt%]}
     TOKEN=$(parse_quiet . '\(%.\)' <<< "$S")
     if [ -n "$TOKEN" ]; then
         log_error "Bad format string: unknown sequence << $TOKEN >>"
@@ -128,7 +132,7 @@ pretty_print() {
         fi
 
         handle_tokens "$FMT" '%raw,%' '%t,	' "%n,$CR" \
-            "%m,$2" "%u,$URL" "%f,$NAME"
+            "%m,$2" "%u,$URL" "%f,$NAME" "%U,$(json_escape "$URL")"
     done
 }
 
@@ -165,24 +169,29 @@ module_null_list() {
 
 # Get library directory
 LIBDIR=$(absolute_path "$0")
+readonly LIBDIR
+TMPDIR=${TMPDIR:-/tmp}
 
 set -e # enable exit checking
 
 source "$LIBDIR/core.sh"
-MODULES=$(get_all_modules_list 'list') || exit
-for MODULE in $MODULES; do
-    source "$LIBDIR/modules/$MODULE.sh"
+
+declare -a MODULES=()
+eval "$(get_all_modules_list list)" || exit
+for MODULE in "${!MODULES_PATH[@]}"; do
+    source "${MODULES_PATH[$MODULE]}"
+    MODULES+=("$MODULE")
 done
 
 # Process command-line (plowlist early options)
 eval "$(process_core_options 'plowlist' "$EARLY_OPTIONS" "$@")" || exit
 
-test "$HELPFULL" && { usage 1; exit 0; }
+test "$HELPFUL" && { usage 1; exit 0; }
 test "$HELP" && { usage; exit 0; }
 test "$GETVERSION" && { echo "$VERSION"; exit 0; }
 
 if test "$ALLMODULES"; then
-    for MODULE in $MODULES; do echo "$MODULE"; done
+    for MODULE in "${MODULES[@]}"; do echo "$MODULE"; done
     exit 0
 fi
 
@@ -204,6 +213,12 @@ elif [ -z "$VERBOSE" ]; then
     declare -r VERBOSE=2
 fi
 
+if [ -n "$NO_COLOR" ]; then
+    unset COLOR
+else
+    declare -r COLOR=yes
+fi
+
 if [ $# -lt 1 ]; then
     log_error 'plowlist: no folder URL specified!'
     log_error "plowlist: try \`plowlist --help' for more information."
@@ -222,10 +237,20 @@ if [ -n "$PRINTF_FORMAT" ]; then
     pretty_check "$PRINTF_FORMAT" || exit
 fi
 
+if [ -n "$EXT_CURLRC" ]; then
+    if [ -n "$NO_CURLRC" ]; then
+        log_notice 'plowlist: --no-curlrc selected and prevails over --curlrc'
+    else
+        log_notice 'plowlist: using alternate curl configuration file'
+    fi
+elif [ -z "$NO_CURLRC" -a -f "$HOME/.curlrc" ]; then
+    log_debug 'using local ~/.curlrc'
+fi
+
 # Print chosen options
 [ -n "$RECURSE" ] && log_debug 'plowlist: --recursive selected'
 
-MODULE_OPTIONS=$(get_all_modules_options "$MODULES" LIST)
+MODULE_OPTIONS=$(get_all_modules_options MODULES[@] LIST)
 
 # Process command-line (all module options)
 eval "$(process_all_modules_options 'plowlist' "$MODULE_OPTIONS" \
@@ -246,7 +271,7 @@ set_exit_trap
 for URL in "${COMMAND_LINE_ARGS[@]}"; do
     LRETVAL=0
 
-    MODULE=$(get_module "$URL" "$MODULES") || LRETVAL=$?
+    MODULE=$(get_module "$URL" MODULES[@]) || LRETVAL=$?
     if [ $LRETVAL -ne 0 ]; then
         if ! match_remote_url "$URL"; then
             if [[ -f "$URL" && "${URL##*.}" = [Dd][Ll][Cc] ]]; then
@@ -308,7 +333,7 @@ if [ ${#RETVALS[@]} -eq 0 ]; then
 elif [ ${#RETVALS[@]} -eq 1 ]; then
     exit ${RETVALS[0]}
 else
-    log_debug "retvals:${RETVALS[@]}"
+    log_debug "retvals:${RETVALS[*]}"
     # Drop success values
     RETVALS=(${RETVALS[@]/#0*} -$ERR_FATAL_MULTIPLE)
 
