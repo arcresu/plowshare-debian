@@ -1,0 +1,35 @@
+From: Carl Suster <carl@contraflo.ws>
+Date: Wed, 6 Jan 2016 00:15:52 +0100
+Subject: src-spelling
+
+---
+ docs/plowdown.1 | 2 +-
+ docs/plowlist.1 | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/docs/plowdown.1 b/docs/plowdown.1
+index e9b2df8..f211b70 100644
+--- a/docs/plowdown.1
++++ b/docs/plowdown.1
+@@ -225,7 +225,7 @@ Exit status:
+ \fB0\fR : script success. plowdown continue normally.
+ .RE
+ .RS
+-\fB2\fR : script explicitily requests skipping current link.
++\fB2\fR : script explicitly requests skipping current link.
+ 
+ Note: Any other script exit status like \fB1\fR (fatal) or \fB3\fR (network) will be ignored (an error message will be reported).
+ .RE
+diff --git a/docs/plowlist.1 b/docs/plowlist.1
+index 858c09e..4da2ba9 100644
+--- a/docs/plowlist.1
++++ b/docs/plowlist.1
+@@ -183,7 +183,7 @@ No available module (provided URL is not supported).
+ .IP 3
+ Network error. Mostly curl related.
+ .IP 10
+-Links are temporarily unavailable. This is used by mirroring/multi-upload services, maybe uploads are still beeing processed.
++Links are temporarily unavailable. This is used by mirroring/multi-upload services, maybe uploads are still being processed.
+ .IP 11
+ Folder is password protected.
+ .IP 13

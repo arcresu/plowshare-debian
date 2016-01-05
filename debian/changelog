@@ -28,6 +28,9 @@ plowshare (2.1.2-1) unstable; urgency=medium
   * debian/gbp.conf, debian/patches/*, debian/source/local-options:
     - Re-export patches using gbp pq without changes and adapt config.
 
+  * debian/patches/02-src-spelling.patch:
+    - Fix some typos in upstream manpages.
+
  -- Carl Suster <carl@contraflo.ws>  Wed, 14 Oct 2015 15:33:28 +0200
 
 plowshare (2.0.1-1) unstable; urgency=medium
