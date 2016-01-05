@@ -25,8 +25,8 @@ plowshare (2.1.2-1) unstable; urgency=medium
   * debian/rules:
     - Trap errors in shell script loops.
 
-  * debian/gbp.conf, debian/patches/*:
-    - Re-export patched using gbp pq without changes.
+  * debian/gbp.conf, debian/patches/*, debian/source/local-options:
+    - Re-export patches using gbp pq without changes and adapt config.
 
  -- Carl Suster <carl@contraflo.ws>  Wed, 14 Oct 2015 15:33:28 +0200
 
