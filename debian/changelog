@@ -11,6 +11,9 @@ plowshare (2.1.2-1) unstable; urgency=medium
   * debian/gbp.conf, debian/get-version, debian/rules:
     - Remove dependency on git history from the build process.
 
+  * debian/control:
+    - Change capitalisation of short description.
+
   * debian/plowshare.completion, debian/rules:
     - Install completion for each command.
 
