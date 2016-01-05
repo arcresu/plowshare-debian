@@ -3,6 +3,8 @@
 # Uncomment this to turn on verbose mode.
 # export DH_VERBOSE=1
 
+set -e
+
 DEB_UPSTREAM_VERSION ?= $(shell dpkg-parsechangelog \
                           | sed -rne 's/^Version: ([0-9.]+)[-+].*$$/\1/p')
 
