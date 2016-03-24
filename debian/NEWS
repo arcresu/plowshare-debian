@@ -1,9 +1,13 @@
-plowshare (2.1.2-1) unstable; urgency=medium
+plowshare (2.1.2-1~bpo8+1) unstable; urgency=medium
 
-  This version of plowshare includes a new tool, plowmod, for manual management
-  of modules. You may choose to use this tool instead of or alongside the
-  plowshare-modules package, but note that it will result in the execution of
-  arbitrary code downloaded from the Internet. See README.Debian for details.
+  This package now contains only the framework for writing script to
+  communicate with file host rather than supporting any of those hosts
+  directly with included modules.
+
+  This version of plowshare includes a new tool, plowmod, for management
+  of modules. It downloads the set of modules from the upstream repository
+  on GitHub. Be warned that using these modules amounts to executing
+  arbitrary code from the Internet. See README.Debian for details.
 
   This version also adds support for user modules which can be installed at
 
@@ -12,17 +16,3 @@ plowshare (2.1.2-1) unstable; urgency=medium
   so that you can test new modules. Consider contributing them upstream!
 
  -- Carl Suster <carl@contraflo.ws>  Wed, 14 Oct 2015 15:33:28 +0200
-
-plowshare (2.0.1-1) unstable; urgency=medium
-
-  Upstream has split the plowshare modules into a separate repository and has
-  decided not to maintain them as carefully as before. A new package called
-  plowshare-modules will package snapshots of this new repository:
-
-      https://github.com/mcrapet/plowshare-modules-legacy
-
-  There will be a tool included with future versions of plowshare to help with
-  manually updating a local copy of the scripts, which you can do instead of
-  using this new package if you want faster updates.
-
- -- Carl Suster <carl@contraflo.ws>  Sun, 05 Jul 2015 13:00:00 +1100

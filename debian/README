@@ -1,29 +1,16 @@
 Plowshare includes a tool, plowmod, which lets you manually update the modules.
-You have three choices of how to manage modules:
+The first time you run this tool, you will be asked to execute:
 
-  1) Ignore plowmod and instead rely on plowshare-modules, which may become out
-     of date, but is maintained as a debian package and receives updates
-     through the normal packaging tools.
+   plowmod --install
 
-  2) Install plowshare-modules but also use the plowmod tool. Using this tool
-     will result in the execution of arbitrary shell scripts downloaded from
-     the Internet. The only advantages are that you receive updates to broken
-     modules sooner, and you can track additional upstream repositories.
+which will create a local copy of the upstream modules repository. You may
+also use the tool to install additional repositories:
 
-     The first time you run this tool, you will be asked to execute:
+   plowmod --install https://github.com/example/plowshare-module-xxx.git
 
-         plowmod --install
+and to update them all with:
 
-     which will create a local copy of the upstream modules repository. You may
-     also use the tool to install additional repositories:
+   plowmod --update
 
-         plowmod --install https://github.com/example/plowshare-module-xxx.git
-
-     and to update them all with:
-
-         plowmod --update
-
-     The versions of the scripts installed by this tool will take priority
-     over any installed through the plowshare-modules package.
-
-  3) Uninstall plowshare-modules and exclusively use plowmod.
+Note that the shell scripts downloaded here will be executed when you use
+plowshare's tools (plowdown, plowup, etc.) to interact with the file hosts.

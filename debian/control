@@ -19,7 +19,6 @@ Depends:
  recode | libhtml-parser-perl,
  ${misc:Depends}
 Recommends:
- plowshare-modules,
  qiv | feh | sxiv | imagemagick
 Suggests:
  aview | caca-utils,
