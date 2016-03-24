@@ -1,11 +1,12 @@
 plowshare (2.1.2-1~bpo8+1) jessie-backports; urgency=medium
 
-  * Backport from sid/testing which is identical except for the fact that
-    it removes references to the optional plowshare-modules package and
-    relies on plowshare's built in utility plowmod.
+  * Backport from testing.
+  * Remove references to the optional plowshare-modules package and
+    relies on plowshare's built in utility plowmod:
     - debian/NEWS and debian/README: update text accordingly.
     - debian/control: remove Recommends: plowshare-modules.
     - debian/gbp.conf and debian/control: update VCS branch.
+  * debian/rules: change completions path back to that expected in jessie.
 
  -- Carl Suster <carl@contraflo.ws>  Thu, 24 Mar 2016 14:59:42 +1100
 

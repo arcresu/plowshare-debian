@@ -16,7 +16,7 @@ override_dh_fixperms:
 override_dh_bash-completion:
 	dh_bash-completion
 	set -e; \
-	for f in debian/plowshare/usr/share/bash-completion/completions/plow*; do \
+	for f in debian/plowshare/etc/bash_completion.d/plow*; do \
 		sed -i -e '/cut/ s,/usr/local,/usr,' "$$f"; \
 	done
 
