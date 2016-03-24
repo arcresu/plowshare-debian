@@ -1,4 +1,4 @@
-plowshare (2.1.2-1~bpo8+1) unstable; urgency=medium
+plowshare (2.1.2-1~bpo8+1) jessie-backports; urgency=medium
 
   This package now contains only the framework for writing script to
   communicate with file host rather than supporting any of those hosts
