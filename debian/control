@@ -7,7 +7,7 @@ Build-Depends:
  debhelper (>= 9)
 Standards-Version: 3.9.6
 Homepage: https://github.com/mcrapet/plowshare
-Vcs-Git: git://github.com/arcresu/plowshare-debian.git -b debian/unstable
+Vcs-Git: git://github.com/arcresu/plowshare-debian.git -b debian/jessie-backports
 Vcs-Browser: https://github.com/arcresu/plowshare-debian
 
 Package: plowshare

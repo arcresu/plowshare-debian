@@ -5,6 +5,7 @@ plowshare (2.1.2-1~bpo8+1) jessie-backports; urgency=medium
     relies on plowshare's built in utility plowmod.
     - debian/NEWS and debian/README: update text accordingly.
     - debian/control: remove Recommends: plowshare-modules.
+    - debian/gbp.conf and debian/control: update VCS branch.
 
  -- Carl Suster <carl@contraflo.ws>  Thu, 24 Mar 2016 14:59:42 +1100
 
