@@ -43,7 +43,7 @@ plowshare (2.1.2-1) unstable; urgency=medium
   * debian/patches/02-src-spelling.patch:
     - Fix some typos in upstream manpages.
 
- -- Carl Suster <carl@contraflo.ws>  Thu, 24 Mar 2016 14:56:10 +1100
+ -- Carl Suster <carl@contraflo.ws>  Wed, 14 Oct 2015 15:33:28 +0200
 
 plowshare (2.0.1-1) unstable; urgency=medium
 
