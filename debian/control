@@ -5,9 +5,9 @@ Maintainer: Carl Suster <carl@contraflo.ws>
 Build-Depends:
  bash-completion,
  debhelper (>= 9)
-Standards-Version: 3.9.6
+Standards-Version: 3.9.7
 Homepage: https://github.com/mcrapet/plowshare
-Vcs-Git: git://github.com/arcresu/plowshare-debian.git -b debian/jessie-backports
+Vcs-Git: https://github.com/arcresu/plowshare-debian.git -b debian/jessie-backports
 Vcs-Browser: https://github.com/arcresu/plowshare-debian
 
 Package: plowshare
@@ -29,8 +29,9 @@ Description: download and upload files from file sharing websites
  providing an API to perform tasks like uploading and downloading files,
  and displaying CAPTCHAs to solve or sending them to CAPTCHA web services.
  .
- This package does not contain any of the drivers (called 'modules') for
- specific file sharing websites.
+ This package contains the framework and command line tolls, but does not
+ contain any of the drivers (called 'modules') for specific file sharing
+ websites.
 
 Package: plowshare4
 Priority: extra

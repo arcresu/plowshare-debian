@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Common set of functions used by modules
-# Copyright (c) 2010-2015 Plowshare team
+# Copyright (c) 2010-2016 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -22,7 +22,7 @@
 set -o pipefail
 
 # Each time an API is updated, this value will be increased
-declare -r PLOWSHARE_API_VERSION=2
+declare -r PLOWSHARE_API_VERSION=3
 
 # User configuration directory (contains plowshare.conf, exec/, storage/)
 declare -r PLOWSHARE_CONFDIR="$HOME/.config/plowshare"
@@ -51,6 +51,7 @@ declare -r ERR_SIZE_LIMIT_EXCEEDED=14     # plowdown: Can't download link becaus
                                           # plowup: Can't upload too big file (need permissions)
 declare -r ERR_BAD_COMMAND_LINE=15        # Unknown command line parameter or incompatible options
 declare -r ERR_ASYNC_REQUEST=16           # plowup: Asynchronous remote upload started (can't predict final status)
+declare -r ERR_EXPIRED_SESSION=17         # Related to local storage module file, expired session
 declare -r ERR_FATAL_MULTIPLE=100         # 100 + (n) with n = first error code (when multiple arguments)
 
 # Global variables used (defined in plow* scripts):
@@ -614,7 +615,7 @@ parse_json() {
     local -r NAME="\"$1\"[[:space:]]*:[[:space:]]*"
     local STR PRE
     # Note: Be nice with unicode chars and don't use $ (end-of-line).
-    # Because dot will not match everthing.
+    # Because dot will not match everything.
     local -r END='\([,}[:space:]].*\)\?'
 
     if [ "$2" = 'join' ]; then
@@ -676,7 +677,7 @@ match_json_true() {
 # Notes:
 # - This is using parse_all, so result can be multiline
 #   (rare usage is: curl -I -L ...).
-# - Use [:cntrl:] intead of \r because Busybox sed <1.19
+# - Use [:cntrl:] instead of \r because Busybox sed <1.19
 #   does not support it.
 #
 # stdin: result of curl request (with -i/--include, -D/--dump-header
@@ -703,7 +704,7 @@ grep_http_header_content_length() {
 # See RFC5987 and RFC2183.
 #
 # stdin: HTTP response headers (see below)
-# stdout: attachement filename
+# stdout: attachment filename
 grep_http_header_content_disposition() {
     parse_all '^[Cc]ontent-[Dd]isposition:' "filename\*\?=[\"']\?\([^\"'[:cntrl:]]*\)"
 }
@@ -914,7 +915,7 @@ parse_attr_quiet() {
 
 # Retrieve "action" attribute (URL) from a <form> marker
 #
-# stdin: (X)HTML data (idealy, call grep_form_by_xxx before)
+# stdin: (X)HTML data (ideally, call grep_form_by_xxx before)
 # stdout: result
 parse_form_action() {
     parse_attr '<[Ff][Oo][Rr][Mm]' 'action'
@@ -1810,7 +1811,7 @@ captcha_process() {
             return $ERR_CAPTCHA
             ;;
         prompt)
-            # Reload mecanism is not available for all types
+            # Reload mechanism is not available for all types
             if [ "$CAPTCHA_TYPE" = 'recaptcha' -o \
                  "$CAPTCHA_TYPE" = 'solvemedia' ]; then
                 log_notice 'Leave this field blank and hit enter to get another captcha image'
@@ -1850,7 +1851,7 @@ captcha_process() {
 # stdout: On 3 lines: <word> \n <challenge> \n <transaction_id>
 recaptcha_process() {
     local -r RECAPTCHA_SERVER='http://www.google.com/recaptcha/api/'
-    local URL="${RECAPTCHA_SERVER}challenge?k=${1}&ajax=1"
+    local URL="${RECAPTCHA_SERVER}challenge?k=${1}"
     local VARS SERVER TRY CHALLENGE FILENAME WORDS TID
 
     VARS=$(curl -L "$URL") || return
@@ -1862,6 +1863,10 @@ recaptcha_process() {
     # Load image
     SERVER=$(echo "$VARS" | parse_quiet 'server' "server[[:space:]]\?:[[:space:]]\?'\([^']*\)'") || return
     CHALLENGE=$(echo "$VARS" | parse_quiet 'challenge' "challenge[[:space:]]\?:[[:space:]]\?'\([^']*\)'") || return
+
+    # Result: Recaptcha.finish_reload('...', 'image');
+    VARS=$(curl "${SERVER}reload?k=${1}&c=${CHALLENGE}&reason=i&type=image&lang=en") || return
+    CHALLENGE=$(echo "$VARS" | parse 'finish_reload' "('\([^']*\)") || return
 
     log_debug "reCaptcha server: $SERVER"
 
@@ -2571,7 +2576,7 @@ storage_timestamp_diff() {
 ## download.sh, upload.sh, delete.sh, list.sh, probe.sh
 ##
 
-# Delete leading and trailing whitespaces.
+# Delete leading and trailing whitespace.
 # stdin: input string (can be multiline)
 # stdout: result string
 strip() {
@@ -2750,7 +2755,7 @@ get_all_modules_list() {
         if [[ -d "$D" && -f "$CONFIG" ]]; then
             while read -r; do
                 if [ -f "$D/$REPLY.sh" ]; then
-                    # Silent override: modues installed in $HOME prevails over $LIBDIR
+                    # Silent override: modules installed in $HOME prevails over $LIBDIR
                     #if [[ ${MODULES_PATH["$REPLY"]} ]]; then
                     #    stderr "INFO: $CONFIG: \`$REPLY\` module overwrite, this one is taken"
                     #fi

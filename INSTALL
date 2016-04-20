@@ -52,13 +52,14 @@ $ yaourt -Sy plowshare
 # Gentoo (http://packages.gentoo.org/package/net-misc/plowshare)
 $ emerge -av plowshare
 
-# Debian (https://packages.debian.org/sid/plowshare4)
-$ apt-get install plowshare4
+# Debian (https://packages.debian.org/sid/plowshare)
+# Note: For Debian 8 "Jessy" or less, package name is plowshare4.
+$ apt-get install plowshare
 
 # Fedora & CentOS (https://admin.fedoraproject.org/updates/plowshare)
 $ yum install plowshare
 
-PS: You'll probably need to be root to execute the plowshare package.
+Note: You'll probably need to be root to install the plowshare package.
 
 2) Manual method: from git sources
 
@@ -78,8 +79,7 @@ You'll need GNU make (not bmake) and gnu-sed (or gsed) installed.
 Don't forget to properly define GNU_SED variable.
 
 # For example
-$ make install GNU_SED=/opt/bin/gnu-sed PREFIX=/usr
-$ make patch_gnused GNU_SED=/opt/bin/gnu-sed PREFIX=/usr
+$ make install patch_gnused GNU_SED=/opt/bin/gnu-sed PREFIX=/usr
 
 Advanced users and maintainers
 ------------------------------
@@ -100,7 +100,7 @@ $ plowmod --install
 
 plowmod is a simple tool for managing your modules directory (~/.config/plowshare/modules.d).
 
-If git (>1.8.5) is installed, you can use later:
+If git (>1.8.5) is installed on your system, you can use later:
 $ plowmod --update
 
 Plowmod can handle 3rd part repositories. See man page for more information.

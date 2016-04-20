@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Upload files to file sharing websites
-# Copyright (c) 2010-2015 Plowshare team
+# Copyright (c) 2010-2016 Plowshare team
 #
 # This file is part of Plowshare.
 #
@@ -46,6 +46,7 @@ CAPTCHA_ANTIGATE,,antigate,s=KEY,Antigate.com captcha key
 CAPTCHA_BHOOD,,captchabhood,a=USER:PASSWD,CaptchaBrotherhood account
 CAPTCHA_COIN,,captchacoin,s=KEY,captchacoin.com API key
 CAPTCHA_DEATHBY,,deathbycaptcha,a=USER:PASSWD,DeathByCaptcha account
+PRE_COMMAND,,run-before,F=PROGRAM,Call external program/script before new file processing
 PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful upload). Default is \"%L%M%u%n\".
 NO_COLOR,,no-color,,Disables log notice & log error output coloring
 EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
@@ -483,6 +484,18 @@ for FILE in "${COMMAND_LINE_ARGS[@]}"; do
     log_notice "Starting upload ($MODULE): $LOCALFILE"
     log_notice "Destination file: $DESTFILE"
 
+    # Pre-processing script (executed in a subshell)
+    if [ -n "$PRE_COMMAND" ]; then
+        URETVAL=0
+        (exec "$PRE_COMMAND" "$MODULE" "$LOCALFILE" "$DESTFILE" "$UCOOKIE") >/dev/null || URETVAL=$?
+
+        if [ $URETVAL -eq $ERR_NOMODULE ]; then
+            log_notice "Skipping file upload (as requested): $LOCALFILE"
+        elif [ $URETVAL -ne 0 ]; then
+            log_error "Pre-processing script exited with status $URETVAL, continue anyway"
+        fi
+    fi
+
     timeout_init $TIMEOUT
 
     TRY=0
@@ -509,12 +522,15 @@ for FILE in "${COMMAND_LINE_ARGS[@]}"; do
             fi
             wait ${AWAIT:-60} || { URETVAL=$?; break; }
 
-            # Unspecified retry but this error does not count as a retry
+            # Unspecified retry but this error does not count as a retry
             if [[ $MAXRETRIES -eq 0 ]]; then
                 log_notice "Starting upload ($MODULE): retry (after wait request)"
                 continue
             fi
-
+        # Does not count as a retry
+        elif [ $URETVAL -eq $ERR_EXPIRED_SESSION ]; then
+            log_notice "Starting upload ($MODULE): retry (expired session)"
+            continue
         elif [[ $MAXRETRIES -eq 0 ]]; then
             break
         elif [ $URETVAL -ne $ERR_FATAL -a $URETVAL -ne $ERR_NETWORK -a \
