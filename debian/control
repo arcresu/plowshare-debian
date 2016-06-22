@@ -5,7 +5,7 @@ Maintainer: Carl Suster <carl@contraflo.ws>
 Build-Depends:
  bash-completion,
  debhelper (>= 9)
-Standards-Version: 3.9.7
+Standards-Version: 3.9.8
 Homepage: https://github.com/mcrapet/plowshare
 Vcs-Git: https://github.com/arcresu/plowshare-debian.git -b debian/unstable
 Vcs-Browser: https://github.com/arcresu/plowshare-debian

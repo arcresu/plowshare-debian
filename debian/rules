@@ -26,6 +26,7 @@ override_dh_install:
 	v=$(DEB_UPSTREAM_VERSION) && \
 		for file in debian/plowshare/usr/share/plowshare/*.sh; do \
 			sed -i -e 's/^\(declare -r VERSION=\).*/\1'"'v$$v'"'/' "$$file"; \
+			sed -i -n -f scripts/minify.sed "$$file"; \
 		done
 
 override_dh_installchangelogs:
