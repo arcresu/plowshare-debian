@@ -1,4 +1,5 @@
 # plowshare completion                                    -*- shell-script -*-
+# Note: -a/--auth, -p/--link-password are common modules options.
 
 _plowup()
 {
@@ -22,7 +23,7 @@ _plowup()
             COMPREPLY=( $( compgen -W 'none session shared' -- $cur ) )
             return 0
             ;;
-        --captchaprogram|--plowsharerc|--curlrc)
+        --captchaprogram|--run-before|---plowsharerc|--curlrc)
             _filedir
             return 0
             ;;
@@ -47,7 +48,7 @@ _plowup()
             -v -q -i -t -r \
             --min-rate --max-rate --interface --max-retries --timeout --name --cache \
             --captchamethod --captchaprogram --9kweu --antigate --captchabhood --captchacoin --deathbycaptcha \
-            --temp-directory --printf --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
+            --temp-directory --printf --run-before --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
     else
         local i files
         for i in /usr/local/share/plowshare/modules/config \
@@ -144,7 +145,7 @@ _plowdel()
             COMPREPLY=( $( compgen -W '0 1 2 3 4' -- $cur ) )
             return 0
             ;;
-        -a|-b|--auth|--auth-free|--9kweu|--antigate|--captchabhood|--captchacoin|--deathbycaptcha)
+        -a|-b|-p|--auth|--auth-free|--link-password|--9kweu|--antigate|--captchabhood|--captchacoin|--deathbycaptcha)
             # argument required but no completion available
             return 0
             ;;
@@ -184,7 +185,7 @@ _plowlist()
             COMPREPLY=( $( compgen -W '0 1 2 3 4' -- $cur ) )
             return 0
             ;;
-        -p|--printf)
+        -p|--link-password|--printf|-t|--timeout)
             # argument required but no completion available
             return 0
             ;;
@@ -200,8 +201,9 @@ _plowlist()
 
     if [[ $cur = -* ]]; then
         COMPREPLY=( $( compgen -W '--help --longhelp --version --quiet --verbose \
-            -v -q -i -R \
-            --interface --printf --recursive --fallback --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
+            -v -q -i -R -t \
+            --interface --printf --recursive --timeout --fallback \
+            --no-curlrc --curlrc --no-plowsharerc --plowsharerc' -- $cur ) )
     else
         # URL pattern expected
         _filedir
@@ -219,7 +221,7 @@ _plowprobe()
             COMPREPLY=( $( compgen -W '0 1 2 3 4' -- $cur ) )
             return 0
             ;;
-        -p|--printf)
+        --printf)
             # argument required but no completion available
             return 0
             ;;
