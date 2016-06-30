@@ -22,10 +22,10 @@
 set -o pipefail
 
 # Each time an API is updated, this value will be increased
-declare -r PLOWSHARE_API_VERSION=3
+declare -r PLOWSHARE_API_VERSION=5
 
-# User configuration directory (contains plowshare.conf, exec/, storage/)
-declare -r PLOWSHARE_CONFDIR="$HOME/.config/plowshare"
+# User configuration directory (contains plowshare.conf, exec/, storage/, modules.d/)
+declare -r PLOWSHARE_CONFDIR="${XDG_CONFIG_HOME:-$HOME/.config}/plowshare"
 
 # Global error codes
 # 0 means success or link alive
@@ -357,10 +357,19 @@ delete_first_line() {
     sed -ne "$((N+1)),\$p"
 }
 
-# Delete last line of a text
+# Delete last line(s) of a text
+# $1: (optional) How many tail lines to delete (default is 1)
 # stdin: input string (multiline)
 delete_last_line() {
-    sed -e '$d'
+    local -r N=${1:-1}
+
+    if (( N < 1 )); then
+        log_error "$FUNCNAME: negative index not expected"
+        return $ERR_FATAL
+    fi
+
+    # Equivalent to `head -n -1` (if $1=1)
+    sed -ne :a -e "1,$N!{P;N;D;};N;ba"
 }
 
 # Check if a string ($2) matches a regexp ($1)
@@ -1279,8 +1288,8 @@ wait() {
     fi
 }
 
-# $1: local image filename (with full path). No specific image format expected.
-# $2: captcha type or hint
+# $1: Image filename (local with full path or remote). No specific image format expected.
+# $2: captcha type or hint. For example: digit, letter, alnum
 # $3: (optional) minimal captcha length
 # $4: (optional) maximal captcha length (unused)
 # stdout: On 2 lines: <word> \n <transaction_id>
@@ -1330,7 +1339,7 @@ captcha_process() {
         METHOD_SOLVE='online,prompt'
     fi
 
-    if [[ "$METHOD_SOLVE" = *online* ]]; then
+    if [[ $METHOD_SOLVE = *online* ]]; then
         if service_antigate_ready "$CAPTCHA_ANTIGATE"; then
             METHOD_SOLVE=antigate
             : ${METHOD_VIEW:=log}
@@ -1367,7 +1376,7 @@ captcha_process() {
     fi
 
     # 1) Probe for X11/Xorg viewers
-    if [[ "$METHOD_VIEW" = *view-x* ]]; then
+    if [[ $METHOD_VIEW = *view-x* ]]; then
         if test -z "$DISPLAY"; then
             log_notice 'DISPLAY variable not exported! Skip X11 viewers probing.'
         elif check_exec 'display'; then
@@ -1384,7 +1393,7 @@ captcha_process() {
     fi
 
     # 2) Probe for framebuffer viewers
-    if [[ "$METHOD_VIEW" = *view-fb* ]]; then
+    if [[ $METHOD_VIEW = *view-fb* ]]; then
         if test -n "$FRAMEBUFFER"; then
             log_notice 'FRAMEBUFFER variable is not empty, use it.'
             FBDEV=$FRAMEBUFFER
@@ -1406,7 +1415,7 @@ captcha_process() {
     # 3) Probe for ascii viewers
     # Try to maximize the image size on terminal
     local MAX_OUTPUT_WIDTH MAX_OUTPUT_HEIGHT
-    if [[ "$METHOD_VIEW" = *view-aa* ]]; then
+    if [[ $METHOD_VIEW = *view-aa* ]]; then
         # libcaca
         if check_exec img2txt; then
             METHOD_VIEW=img2txt
@@ -1420,7 +1429,7 @@ captcha_process() {
             log_notice 'No ascii viewer found to display captcha image'
         fi
 
-        if [[ "$METHOD_VIEW" != *view-aa* ]]; then
+        if [[ $METHOD_VIEW != *view-aa* ]]; then
             if check_exec tput; then
                 local TYPE
                 if [ -z "$TERM" -o "$TERM" = 'dumb' ]; then
@@ -2244,6 +2253,9 @@ sha1() {
     # GNU coreutils
     if check_exec sha1sum; then
         echo -n "$1" | sha1sum -b 2>/dev/null | cut -d' ' -f1
+    # BSD
+    elif check_exec sha1; then
+        command sha1 -qs "$1"
     # OpenSSL
     elif check_exec openssl; then
         echo -n "$1" | openssl dgst -sha1 | cut -d' ' -f2
@@ -2279,6 +2291,31 @@ md5_file() {
     fi
 }
 
+# Calculate SHA-1 hash (160-bit) of a file.
+# $1: input file
+# stdout: message-digest fingerprint (40-digit hexadecimal number, lowercase letters)
+# $?: 0 for success or $ERR_SYSTEM
+sha1_file() {
+    if [ -f "$1" ]; then
+        # GNU coreutils
+        if check_exec sha1sum; then
+            sha1sum -b "$1" 2>/dev/null | cut -d' ' -f1
+        # BSD
+        elif check_exec sha1; then
+            command sha1 -q "$1"
+        # OpenSSL
+        elif check_exec openssl; then
+            openssl dgst -sha1 "$1" | cut -d' ' -f2
+        else
+            log_error "$FUNCNAME: cannot find sha1 calculator"
+            return $ERR_SYSTEM
+        fi
+    else
+        log_error "$FUNCNAME: cannot stat file"
+        return $ERR_SYSTEM
+    fi
+}
+
 # Split credentials
 # $1: auth string (user:password)
 # $2: variable name (user)
@@ -2299,9 +2336,9 @@ split_auth() {
         return $ERR_LOGIN_FAILED
     fi
 
-    [[ "$2" ]] && unset "$2" && eval $2=\$__STR__
+    [[ $2 ]] && unset "$2" && eval $2=\$__STR__
 
-    if [[ "$3" ]]; then
+    if [[ $3 ]]; then
         # Sanity check
         if [ "$2" = "$3" ]; then
             log_error "$FUNCNAME: user and password varname must not be the same"
@@ -2580,7 +2617,8 @@ storage_timestamp_diff() {
 # stdin: input string (can be multiline)
 # stdout: result string
 strip() {
-    sed -e 's/^[[:space:]]*//; s/[[:space:]]*$//'
+    # first translate non-breaking space to space
+    sed -e 's/\xC2\?\xA0/ /g' -e 's/^[[:space:]]*//; s/[[:space:]]*$//'
 }
 
 # Do some cleanups before exiting program
@@ -2608,7 +2646,7 @@ set_exit_trap() {
 # Better than "which" (external) executable
 #
 # $1: Executable to check
-# $?: zero means not found
+# $?: one means not found
 check_exec() {
     command -v "$1" >/dev/null 2>&1
 }
@@ -2747,7 +2785,7 @@ get_all_modules_list() {
         while read -r; do
             D=$(dirname "$REPLY")
             SRCS+=( "$D" )
-        done < <(find "$PLOWSHARE_CONFDIR/modules.d/" -mindepth 2 -maxdepth 2 -name config)
+        done < <(find -L "$PLOWSHARE_CONFDIR/modules.d/" -mindepth 2 -maxdepth 2 -name config)
     fi
 
     for D in "${SRCS[@]}"; do
@@ -3094,7 +3132,7 @@ translate_exec() {
 
 # Check for positive speed rate
 # Ki is kibi (2^10 = 1024). Alias: K
-# Mi is mebi (2^20 = 1024^2 = 1048576). Alias:m
+# Mi is mebi (2^20 = 1024^2 = 1048576). Alias: m
 # k  is kilo (10^3 = 1000)
 # M  is mega (10^6 = 1000000)
 #
@@ -3323,7 +3361,8 @@ check_argument_type() {
 # $1: program name (used for error reporting only)
 # $2: option list (one per line)
 # $3: step number (-1, 0 or 1). Always declare UNUSED_ARGS & UNUSED_OPTS arrays.
-#     -1: check plow* args and declare readonly variables
+#     -1: check plow* args and declare readonly variables.
+#         CLOSE_OPT variable can contain a close match heuristic (possible command-line user typo)
 #      0: check all module args
 #      1: declare module_vars_set & module_vars_unset functions
 # $4..$n: arguments
@@ -3422,7 +3461,7 @@ process_options() {
                         fi
                     else
                         if [ $# -eq 0 ]; then
-                            log_error "$NAME: missing parameter for $ARG"
+                            log_error "$NAME ($ARG): argument required"
                             echo "exit $ERR_BAD_COMMAND_LINE"
                             return $ERR_BAD_COMMAND_LINE
                         fi
@@ -3484,7 +3523,7 @@ process_options() {
                         fi
                     else
                         if [ $# -eq 0 ]; then
-                            log_error "$NAME: missing parameter for $ARG"
+                            log_error "$NAME ($ARG): argument required"
                             echo "exit $ERR_BAD_COMMAND_LINE"
                             return $ERR_BAD_COMMAND_LINE
                         fi
@@ -3510,18 +3549,31 @@ process_options() {
 
         if [ -z "$FOUND" ]; then
             # Check for user typo: -option instead of --option
+            # Note: COLOR may not be defined here (STEP < 0)
             if [[ $ARG =~ ^-[[:alnum:]][[:alnum:]-]+ ]]; then
                 if find_in_array OPTS_NAME_LONG[@] "-${BASH_REMATCH[0]}"; then
-                    log_error "$NAME: did you mean \`-${BASH_REMATCH[0]}\` (with two dashes ?)"
+                    log_error "$NAME: unknown command-line option \`$ARG\`, do you mean \`-${BASH_REMATCH[0]}\` (with two dashes)?"
                     echo "exit $ERR_BAD_COMMAND_LINE"
                     return $ERR_BAD_COMMAND_LINE
                 fi
             fi
 
+            # Restrict to MAIN_OPTIONS & EARLY_OPTIONS because an unused module switch could be found
+            # Will detect: "--print" instead of "--printf" and "--noplowsharerc" instead of "--no-plowsharerc"
+            if [ $STEP -lt 0 ]; then
+                [[ $ARG = --??* ]] && \
+                    CLOSE_OPT=$(close_match_in_array OPTS_NAME_LONG[@] "$ARG") && \
+                        declare -p CLOSE_OPT
+            fi
+
             if [ $STEP -eq 0 ]; then
                 # Accept '-' (stdin semantic) argument
                 if [[ $ARG = -?* ]]; then
-                    log_error "$NAME: unknown command-line option $ARG"
+                    if [[ $CLOSE_OPT ]]; then
+                        log_error "$NAME: unknown command-line option \`$ARG\`, do you mean \`$CLOSE_OPT\` (close match)?"
+                    else
+                        log_error "$NAME: unknown command-line option \`$ARG\`"
+                    fi
                     echo "exit $ERR_BAD_COMMAND_LINE"
                     return $ERR_BAD_COMMAND_LINE
                 fi
@@ -3594,7 +3646,7 @@ timeout_update() {
     (( PS_TIMEOUT -= WAIT ))
 }
 
-# Look for one element in a array
+# Look for one element in an array
 # $1: array[@]
 # $2: element to find
 # $3: alternate element to find (can be null)
@@ -3603,6 +3655,23 @@ find_in_array() {
     local ELT
     for ELT in "${!1}"; do
         [ "$ELT" = "$2" -o "$ELT" = "$3" ] && return 0
+    done
+    return 1
+}
+
+# Look for a close match in an array (of command line options)
+# $1: array[@]
+# $2: element to find (string)
+# $?: 0 for success (close element found), not found otherwise
+# stdout: array element, undefined if not found.
+close_match_in_array() {
+    local ELT
+    local S=${2/#--no/--no-?}
+    for ELT in "${!1}"; do
+        if [[ $ELT =~ ^$S.?$ ]]; then
+            echo "$ELT"
+            return 0
+        fi
     done
     return 1
 }
@@ -3836,23 +3905,24 @@ service_captchadeathby_ready() {
 # $?: 0 for success
 image_upload_imgur() {
     local -r IMG=$1
-    local -r BASE_API='http://api.imgur.com/2'
-    local RESPONSE DIRECT_URL SITE_URL DEL_HASH
+    local -r BASE_API='https://api.imgur.com/3'
+    local RESPONSE DIRECT_URL FID DEL_HASH
 
     log_debug 'uploading image to Imgur.com'
 
-    # Plowshare API key for Imgur
-    RESPONSE=$(curl -F "image=@$IMG" -H 'Expect: ' \
-        --form-string 'key=23d202e580c2f8f378bd2852916d8f30' \
+    # Plowshare App for Imgur
+    RESPONSE=$(curl -F "image=@$IMG" \
+        -H 'Authorization: Client-ID 5926b561daf4510' \
         --form-string 'type=file' \
         --form-string 'title=Plowshare uploaded image' \
         "$BASE_API/upload.json") || return
 
-    DIRECT_URL=$(echo "$RESPONSE" | parse_json_quiet original)
-    SITE_URL=$(echo "$RESPONSE" | parse_json_quiet imgur_page)
-    DEL_HASH=$(echo "$RESPONSE" | parse_json_quiet deletehash)
+    DIRECT_URL=$(parse_json_quiet link <<< "$RESPONSE")
+    FID=$(parse_json_quiet id <<< "$RESPONSE")
+    DEL_HASH=$(parse_json_quiet deletehash <<< "$RESPONSE")
 
-    if [ -z "$DIRECT_URL" -o -z "$SITE_URL" ]; then
+    if [ -z "$DIRECT_URL" -o -z "$FID" ]; then
+        log_debug "$FUNCNAME: $RESPONSE"
         if match '504 Gateway Time-out' "$RESPONSE"; then
             log_error "$FUNCNAME: upload error (Gateway Time-out)"
         # <h1>Imgur is over capacity!</h1>
@@ -3865,7 +3935,7 @@ image_upload_imgur() {
     fi
 
     log_error "Image: $DIRECT_URL"
-    log_error "Image: $SITE_URL"
+    log_error "Image: http://imgur.com/$FID"
     echo "$DEL_HASH"
 }
 
@@ -3873,14 +3943,19 @@ image_upload_imgur() {
 # $1: delete hash
 image_delete_imgur() {
     local -r HID=$1
-    local -r BASE_API='http://api.imgur.com/2'
-    local RESPONSE MSG
+    local -r BASE_API='https://api.imgur.com/3'
+    local RESPONSE
 
     log_debug 'deleting image from Imgur.com'
-    RESPONSE=$(curl "$BASE_API/delete/$HID.json") || return
-    MSG=$(echo "$RESPONSE" | parse_json_quiet message)
-    if [ "$MSG" != 'Success' ]; then
-        log_notice "$FUNCNAME: remote error, $MSG"
+    RESPONSE=$(curl -X DELETE \
+        -H 'Authorization: Client-ID 5926b561daf4510' \
+        "$BASE_API/image/$HID.json") || return
+
+    if ! match_json_true 'success' "$RESPONSE"; then
+        local MSG ERRNO
+        MSG=$(parse_json error <<< "$RESPONSE")
+        ERRNO=$(parse_json status <<< "$RESPONSE")
+        log_notice "$FUNCNAME: remote error, $MSG ($ERRNO)"
     fi
 }
 

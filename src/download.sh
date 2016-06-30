@@ -26,7 +26,8 @@ HELPFUL,H,longhelp,,Exhaustive help info (with modules command-line options)
 GETVERSION,,version,,Output plowdown version information and exit
 ALLMODULES,,modules,,Output available modules (one per line) and exit. Useful for wrappers.
 EXT_PLOWSHARERC,,plowsharerc,f=FILE,Force using an alternate configuration file (overrides default search path)
-NO_PLOWSHARERC,,no-plowsharerc,,Do not use any plowshare.conf configuration file"
+NO_PLOWSHARERC,,no-plowsharerc,,Do not use any plowshare.conf configuration file
+NO_COLOR,,no-color,,Disables log notice & log error output coloring"
 
 declare -r MAIN_OPTIONS="
 VERBOSE,v,verbose,c|0|1|2|3|4=LEVEL,Verbosity level: 0=none, 1=err, 2=notice (default), 3=dbg, 4=report
@@ -53,7 +54,6 @@ PRE_COMMAND,,run-before,F=PROGRAM,Call external program/script before new link p
 POST_COMMAND,,run-after,F=PROGRAM,Call external program/script after link being successfully processed
 SKIP_FINAL,,skip-final,,Don't process final link (returned by module), just skip it (for each link)
 PRINTF_FORMAT,,printf,s=FORMAT,Print results in a given format (for each successful download). Default is \"%F%n\".
-NO_COLOR,,no-color,,Disables log notice & log error output coloring
 NO_MODULE_FALLBACK,,fallback,,If no module is found for link, simply download it (HTTP GET)
 EXT_CURLRC,,curlrc,f=FILE,Force using an alternate curl configuration file (overrides ~/.curlrc)
 NO_CURLRC,,no-curlrc,,Do not use curlrc config file"
@@ -142,10 +142,19 @@ mark_queue() {
         if [ 'file' = "$1" ]; then
             if test -w "$FILE"; then
                 local -r D=$'\001' # sed separator
-                test "$FILENAME" && FILENAME="${FILENAME//&/\\&}\n"
-                sed -i -e "s$D^[[:space:]]*\(${URL//\\/\\\\/}[[:space:]]*\)\$$D$FILENAME$STATUS \1$D" "$FILE" &&
-                    log_notice "link marked in file \`$FILE' ($STATUS)" ||
+                local SRET=0
+                if [ -z "$FILENAME" ]; then
+                    sed -i -e "s$D^[[:space:]]*\(${URL//\\/\\\\/}[[:space:]]*\)\$$D$STATUS \1$D" "$FILE" || SRET=$?
+                else
+                    # Don't write filename if it is already present
+                    sed -i -e "\\$D^[[:space:]]*#[[:space:]]*${FILENAME:2}\r\?\$$D{N}" \
+                        -e "s$D^\([[:space:]]*#[[:space:]]*${FILENAME:2}\r\?\n\)\?[[:space:]]*\(${URL//\\/\\\\/}[[:space:]]*\r\?\)\$$D${FILENAME//&/\\&}\n$STATUS \2$D" "$FILE" || SRET=$?
+                fi
+                if [ $SRET -eq 0 ]; then
+                    log_notice "link marked in file \`$FILE' ($STATUS)"
+                else
                     log_error "failed marking link in file \`$FILE' ($STATUS)"
+                fi
             else
                 log_error "Can't mark link, no write permission ($FILE)"
             fi
@@ -782,7 +791,14 @@ fi
 
 # Get configuration file options. Command-line is partially parsed.
 test -z "$NO_PLOWSHARERC" && \
-    process_configfile_options '[Pp]lowdown' "$MAIN_OPTIONS" "$EXT_PLOWSHARERC"
+    process_configfile_options '[Pp]lowdown' "${MAIN_OPTIONS}
+NO_COLOR,,no-color,,x" "$EXT_PLOWSHARERC"
+
+if [ -n "$NO_COLOR" ]; then
+    unset COLOR
+else
+    declare -r COLOR=yes
+fi
 
 declare -a COMMAND_LINE_MODULE_OPTS COMMAND_LINE_ARGS RETVALS
 COMMAND_LINE_ARGS=("${UNUSED_ARGS[@]}")
@@ -798,12 +814,6 @@ elif [ -z "$VERBOSE" ]; then
     declare -r VERBOSE=2
 fi
 
-if [ -n "$NO_COLOR" ]; then
-    unset COLOR
-else
-    declare -r COLOR=yes
-fi
-
 if [ "${#MODULES}" -le 0 ]; then
     log_error \
 "-------------------------------------------------------------------------------
@@ -813,6 +823,7 @@ Your plowshare installation has currently no module.
 In order to use plowdown you must install some modules. Here is a quick start:
 $ plowmod --install
 -------------------------------------------------------------------------------"
+    exit $ERR_NOMODULE
 fi
 
 if [ $# -lt 1 ]; then
