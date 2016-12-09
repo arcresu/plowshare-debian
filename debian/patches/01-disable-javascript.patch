@@ -4,59 +4,88 @@ Subject: disable-javascript
 
 Bug-Debian: http://bugs.debian.org/791467
 Description: Disable javascript execution
- Plowshare uses rhino CLI to execute javascript downloaded from the Internet.
- Since this is not filtered or sandboxed at all, the javascript can obtain
- arbitrary access to the system and so this patch disables it.
+ Plowshare uses rhino CLI or similar to execute javascript downloaded from the
+ Internet.  Since this is not filtered or sandboxed at all, the javascript can
+ obtain arbitrary access to the system and so this patch disables it by
+ default.
  .
- Some modules will be broken by this change, but since the modules will break
- anyway it is expected that most users will be using a more recent version of
- this package, and in future less aggressive fixes will be investigated.
+ Some modules depend on javascript in order to function normally and so
+ an option is provided to enable javascript by setting the enviroment
+ variable `PLOWSHARE_DEBIAN_JS=yes`.
 ---
- src/core.sh | 24 ++++++------------------
- 1 file changed, 6 insertions(+), 18 deletions(-)
+ docs/plowdown.1 |  3 +++
+ docs/plowup.1   |  3 +++
+ src/core.sh     | 15 ++++++++++++++-
+ 3 files changed, 20 insertions(+), 1 deletion(-)
 
+diff --git a/docs/plowdown.1 b/docs/plowdown.1
+index 9be5b112..08ec09ac 100644
+--- a/docs/plowdown.1
++++ b/docs/plowdown.1
+@@ -448,6 +448,9 @@ Specifies an alternate curl command (\fB$PATH\fR search is considered). If not d
+ .I PLOWSHARE_JS
+ Specifies an alternate js command (\fB$PATH\fR search is considered). If not defined, \fBjs\fR is used.
+ .TP
++.I PLOWSHARE_DEBIAN_JS
++When set to \fByes\fR javascript is enabled, otherwise it is blocked per #791467. Note that arbitrary javascript downloaded from the Internet will be run without any sandboxing if this is enabled.
++.TP
+ .I XDG_CONFIG_HOME
+ The directory to store user configuration files. If not defined, \fB~/.config\fR is assumed.
+ 
+diff --git a/docs/plowup.1 b/docs/plowup.1
+index ccdd21a3..83b4b4fb 100644
+--- a/docs/plowup.1
++++ b/docs/plowup.1
+@@ -430,6 +430,9 @@ Specifies an alternate curl command (\fB$PATH\fR search is considered). If not d
+ .I PLOWSHARE_JS
+ Specifies an alternate js command (\fB$PATH\fR search is considered). If not defined, \fBjs\fR is used.
+ .TP
++.I PLOWSHARE_DEBIAN_JS
++When set to \fByes\fR javascript is enabled, otherwise it is blocked per #791467. Note that arbitrary javascript downloaded from the Internet will be run without any sandboxing if this is enabled.
++.TP
+ .I XDG_CONFIG_HOME
+ The directory to store user configuration files. If not defined, \fB~/.config\fR is assumed.
+ 
 diff --git a/src/core.sh b/src/core.sh
-index f675103..a4ed292 100644
+index 8eff97fb..eb516383 100644
 --- a/src/core.sh
 +++ b/src/core.sh
-@@ -1208,34 +1208,22 @@ post_login() {
+@@ -29,6 +29,7 @@ declare -r PLOWSHARE_CONFDIR="${XDG_CONFIG_HOME:-$HOME/.config}/plowshare"
+ 
+ # Dependencies
+ declare -r PLOWCORE_JS=${PLOWSHARE_JS:-js}
++declare -r PLOWCORE_DEBIAN_JS=${PLOWSHARE_DEBIAN_JS:-no}
+ declare -r PLOWCORE_CURL=${PLOWSHARE_CURL:-curl}
+ 
+ # Global error codes
+@@ -1335,9 +1336,21 @@ post_login() {
      fi
  }
  
-+# NB: Javascript disabled due to #791467
++# Debian NB: Javascript disabled by default due to #791467
++debian_javascript_enabled() {
++    if [ "$PLOWCORE_DEBIAN_JS" != 'yes' ]; then
++        return $ERR_SYSTEM
++    fi
++}
++
  # Detect if a JavaScript interpreter is installed
  # $? is zero on success
  detect_javascript() {
--    if ! type -P js >/dev/null 2>&1; then
--        log_notice 'Javascript interpreter not found. Please install one!'
--        return $ERR_SYSTEM
--    fi
-+    log_notice 'Use of Javascript interpreter is disabled in debian for security.'
-+    return $ERR_SYSTEM
- }
++    if ! debian_javascript_enabled; then
++        log_notice "Plowshare's use of Javascript interpreter is disabled in Debian by default for security. (See: #791467)"
++        log_notice 'Javascript may be enabled by setting the environment variable PLOWSHARE_DEBIAN_JS=yes'
++        return $ERR_SYSTEM
++    fi
+     if ! type -P "$PLOWCORE_JS" >/dev/null 2>&1; then
+         log_notice 'Javascript interpreter not found. Please install one!'
+         return $ERR_SYSTEM
+@@ -2771,7 +2784,7 @@ core_init() {
+         log_debug "using custom curl: $PLOWSHARE_CURL"
+     fi
  
-+# NB: Javascript disabled due to #791467
- # Execute javascript code
- #
- # stdin: js script
- # stdout: script result
- javascript() {
--    local TEMPSCRIPT
--
--    detect_javascript || return
--    TEMPSCRIPT=$(create_tempfile '.js') || return
--    cat > "$TEMPSCRIPT"
--
--    log_report "interpreter: $(type -P js)"
--    log_report '=== JAVASCRIPT BEGIN ==='
--    logcat_report "$TEMPSCRIPT"
--    log_report '=== JAVASCRIPT END ==='
--
--    command js "$TEMPSCRIPT"
--    rm -f "$TEMPSCRIPT"
--    return 0
-+    log_notice 'Use of Javascript interpreter is disabled in debian for security.'
-+    return $ERR_SYSTEM
- }
- 
- # Wait some time
+-    if [ -n "$PLOWSHARE_JS" ]; then
++    if debian_javascript_enabled && [ -n "$PLOWSHARE_JS" ]; then
+         if ! type -P "$PLOWSHARE_JS" >/dev/null 2>&1; then
+             log_error "$NAME: \$PLOWSHARE_JS is invalid, abort"
+             return $ERR_SYSTEM
