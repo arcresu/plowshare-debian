@@ -1,3 +1,15 @@
+plowshare (2.1.6-1~bpo8+1) jessie-backports; urgency=medium
+
+  Javascript was previously unconditionally disabled in the Debian package due
+  to the security risk of executing arbitrary code from the Internet without
+  sandboxing. In this release it can be enabled anyway by setting
+
+      PLOWSHARE_DEBIAN_JS=yes
+
+  in the environment. Use at your own risk!
+
+ -- Carl Suster <carl@contraflo.ws>  Fri, 09 Dec 2016 11:38:43 +1100
+
 plowshare (2.1.2-1~bpo8+1) jessie-backports; urgency=medium
 
   This package now contains only the framework for writing script to

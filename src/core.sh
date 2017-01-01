@@ -22,10 +22,14 @@
 set -o pipefail
 
 # Each time an API is updated, this value will be increased
-declare -r PLOWSHARE_API_VERSION=5
+declare -r PLOWSHARE_API_VERSION=6
 
 # User configuration directory (contains plowshare.conf, exec/, storage/, modules.d/)
 declare -r PLOWSHARE_CONFDIR="${XDG_CONFIG_HOME:-$HOME/.config}/plowshare"
+
+# Dependencies
+declare -r PLOWCORE_JS=${PLOWSHARE_JS:-js}
+declare -r PLOWCORE_CURL=${PLOWSHARE_CURL:-curl}
 
 # Global error codes
 # 0 means success or link alive
@@ -83,6 +87,7 @@ declare -r ERR_FATAL_MULTIPLE=100         # 100 + (n) with n = first error code 
 #
 # Global variables defined here (FIXME later):
 #   - PS_TIMEOUT       (plowdown, plowup) Timeout (in seconds) for one item
+#   - CONT_SIGNAL      SIGCONT signal received
 
 # log_report for a file
 # $1: filename
@@ -172,11 +177,11 @@ curl() {
     fi
 
     if test $VERBOSE -lt 4; then
-        command curl "${OPTIONS[@]}" "${CURL_ARGS[@]}" || DRETVAL=$?
+        command "$PLOWCORE_CURL" "${OPTIONS[@]}" "${CURL_ARGS[@]}" || DRETVAL=$?
     else
         local FILESIZE TEMPCURL=$(create_tempfile)
         log_report "${OPTIONS[@]}" "${CURL_ARGS[@]}"
-        command curl "${OPTIONS[@]}" "${CURL_ARGS[@]}" --show-error --silent >"$TEMPCURL" 2>&1 || DRETVAL=$?
+        command "$PLOWCORE_CURL" "${OPTIONS[@]}" "${CURL_ARGS[@]}" --show-error --silent >"$TEMPCURL" 2>&1 || DRETVAL=$?
         FILESIZE=$(get_filesize "$TEMPCURL")
         log_report "Received $FILESIZE bytes. DRETVAL=$DRETVAL"
         log_report '=== CURL BEGIN ==='
@@ -370,6 +375,119 @@ delete_last_line() {
 
     # Equivalent to `head -n -1` (if $1=1)
     sed -ne :a -e "1,$N!{P;N;D;};N;ba"
+}
+
+# Delete lines up to regexp (included).
+# In a nutshell: eat lines until regexp is met, if nothing match,
+# delete lines until the end of input data (not really useful).
+# In vim, it would look like this: ":.,/regex/d" or ":.+5,/regex/+1d" ($3=5,$2=1).
+#
+# Examples:
+# $ echo -e "aa\nbb\ncc\ndd\ee" >/tmp/f
+# $ delete_filter_line 'cc'     </tmp/f         # Returns: dd\nee
+# $ delete_filter_line 'cc' -1  </tmp/f         # Returns: cc\ndd\nee
+# $ delete_filter_line 'cc' -2  </tmp/f         # Returns: bb\ncc\ndd\nee
+# $ delete_filter_line 'cc' 1   </tmp/f         # Returns: ee
+#
+# $1: stop condition regex
+#     This is non greedy, first occurrence is taken
+# $2: (optional): offset, how many line to skip (default is 0) after matching regexp.
+#     Example ($2=-1): delete lines from line $3 to regexp (excluded)
+# $3: (optional): start line number (start at index 1, default is 1)
+# stdin: text data (multiline)
+# stdout: result
+delete_filter_line() {
+    local -i FUZZ=${2:-0}
+    local -i N=${3:-1}
+    local -r D=$'\001' # Change sed separator to allow '/' characters in regexp
+    local STR FILTER
+
+    if [[ ! $1 ]]; then
+        log_error "$FUNCNAME: invalid regexp, must not be empty"
+        return $ERR_FATAL
+    elif [ $N -le 0 ]; then
+        log_error "$FUNCNAME: wrong argument, start line must be strictly positive ($N given)"
+        return $ERR_FATAL
+    elif [ $N -gt 1 -a $FUZZ -lt -1 ]; then
+        log_debug "$FUNCNAME: before context ($FUZZ) could duplicates lines (already printed before line $N), continue anyway"
+    fi
+
+    # Notes:
+    # - We need to be careful when regex matches the first line ($3)
+    # - This head lines skip ($3) makes things really more complicated
+
+    (( --N ))
+    FILTER="\\${D}$1${D}" # /$1/
+
+    if [ $FUZZ -eq 0 ]; then
+        if (( $N > 0 )); then
+            # Line $N must be displayed
+            STR=$(sed -e "${N}p" -e "$N,${FILTER}d")
+        else
+            # 0,/regexp/ is valid, match can occur on first line
+            STR=$(sed -e "$N,${FILTER}d")
+        fi
+
+    elif [ $FUZZ -eq 1 ]; then
+        if (( $N > 0 )); then
+            STR=$(sed -e "${N}p" -e "$N,${FILTER}{${FILTER}N;d}")
+        else
+            STR=$(sed -e "$N,${FILTER}{${FILTER}N;d}")
+        fi
+
+    elif [ $FUZZ -eq -1 ]; then
+        if (( $N > 0 )); then
+            # If regexp matches at line $N do not print it twice
+            STR=$(sed -e "${N}p" -e "$N,${FILTER}{${N}d;${FILTER}p;d}")
+        else
+            STR=$(sed -e "$N,${FILTER}{${FILTER}p;d}")
+        fi
+
+    else
+        local -i FUZZ_ABS=$(( FUZZ < 0 ? -FUZZ : FUZZ ))
+
+        [ $FUZZ_ABS -gt 10 ] &&
+            log_notice "$FUNCNAME: are you sure you want to skip $((N+1)) lines?"
+
+        if [ $FUZZ -gt 0 ]; then
+            local SKIPS='N'
+
+            # printf '=%.0s' {1..n}
+            while (( --FUZZ_ABS )); do
+                SKIPS+=';N'
+            done
+
+            if (( $N > 0 )); then
+                STR=$(sed -e "${N}p" -e "$N,${FILTER}{${FILTER}{${SKIPS}};d}")
+            else
+                STR=$(sed -e "$N,${FILTER}{${FILTER}{${SKIPS}};d}")
+            fi
+        else
+            local LINES='.*'
+
+            while (( --FUZZ_ABS )); do
+                LINES+='\n.*'
+            done
+
+            if (( $N > 0 )); then
+                # Notes: could display duplicated lines when fuzz is below $N
+                # This is not a bug, just a side effect...
+                STR=$(sed -e "${N}p" -e "1h;1!H;x;s/^.*\\n\\($LINES\)$/\\1/;x" \
+                          -e "$N,${FILTER}{${N}d;${FILTER}{g;p};d}")
+            else
+                STR=$(sed -e "1h;1!H;x;s/^.*\\n\\($LINES\)$/\\1/;x" \
+                          -e "$N,${FILTER}{${FILTER}{g;p};d}")
+            fi
+        fi
+    fi
+
+    if [ -z "$STR" ]; then
+        log_error "$FUNCNAME failed (sed): \"$N,/$1/d\" (skip $FUZZ)"
+        log_notice_stack
+        return $ERR_FATAL
+    fi
+
+    echo "$STR"
 }
 
 # Check if a string ($2) matches a regexp ($1)
@@ -1220,7 +1338,7 @@ post_login() {
 # Detect if a JavaScript interpreter is installed
 # $? is zero on success
 detect_javascript() {
-    if ! type -P js >/dev/null 2>&1; then
+    if ! type -P "$PLOWCORE_JS" >/dev/null 2>&1; then
         log_notice 'Javascript interpreter not found. Please install one!'
         return $ERR_SYSTEM
     fi
@@ -1242,7 +1360,7 @@ javascript() {
     logcat_report "$TEMPSCRIPT"
     log_report '=== JAVASCRIPT END ==='
 
-    command js "$TEMPSCRIPT"
+    command "$PLOWCORE_JS" "$TEMPSCRIPT"
     rm -f "$TEMPSCRIPT"
     return 0
 }
@@ -1276,10 +1394,21 @@ wait() {
     local MSG="Waiting $VALUE $UNIT_STR..."
     local CLEAR="     \b\b\b\b\b"
     if test -t 2; then
+        local START_DATE=$(date +%s)
+        CONT_SIGNAL=
         while [ "$REMAINING" -gt 0 ]; do
             log_notice_norc "\r$MSG $(splitseconds $REMAINING) left$CLEAR"
             sleep 1
-            (( --REMAINING ))
+            if [[ $CONT_SIGNAL ]]; then
+                local -i TMP_SECS
+                (( TMP_SECS = TOTAL_SECS - (CONT_SIGNAL - START_DATE) ))
+                (( TMP_SECS >= 0 )) || TMP_SECS=0
+                CONT_SIGNAL=
+                log_debug "SIGCONT detected, adjust wait time ($REMAINING => $TMP_SECS)"
+                REMAINING=$TMP_SECS
+            else
+                (( --REMAINING ))
+            fi
         done
         log_notice_norc "\r$MSG done$CLEAR\n"
     else
@@ -2481,7 +2610,7 @@ storage_set() {
     local -A OBJ
 
     if [ -z "$MODULE" ]; then
-        log_error "$FUNCNAME: \$MODULE is undefined, abort."
+        log_error "$FUNCNAME: \$MODULE is undefined, abort"
         return $ERR_NOMODULE
     fi
 
@@ -2536,7 +2665,7 @@ storage_get() {
     local -A OBJ
 
     if [ -z "$MODULE" ]; then
-        log_error "$FUNCNAME: \$MODULE is undefined, abort."
+        log_error "$FUNCNAME: \$MODULE is undefined, abort"
         return $ERR_NOMODULE
     fi
 
@@ -2570,7 +2699,7 @@ storage_reset() {
     local CONFIG
 
     if [ -z "$MODULE" ]; then
-        log_error "$FUNCNAME: \$MODULE is undefined, abort."
+        log_error "$FUNCNAME: \$MODULE is undefined, abort"
         return $ERR_NOMODULE
     fi
 
@@ -2621,25 +2750,42 @@ strip() {
     sed -e 's/\xC2\?\xA0/ /g' -e 's/^[[:space:]]*//; s/[[:space:]]*$//'
 }
 
-# Do some cleanups before exiting program
-exit_handler() {
-    # Restore proper colors (just in case)
-    log_notice_norc ''
+# Initialize plowcore: check environment variables and install signal handlers
+# $1: program name (used for error reporting only)
+core_init() {
+    local -r NAME=${1:-ERROR}
 
-    # Remove temporal files created by create_tempfile
-    rm -f "$TMPDIR/$(basename_file $0).$$".*
-}
-
-# Install exit handler
-set_exit_trap() {
     if [ -z "$TMPDIR" ]; then
-        log_error 'ERROR: $TMPDIR is not defined.'
+        log_error "$NAME: \$TMPDIR is undefined, abort"
         return $ERR_SYSTEM
     elif [ ! -d "$TMPDIR" ]; then
-        log_error 'ERROR: $TMPDIR is not a directory.'
+        log_error "$NAME: \$TMPDIR is not a directory, abort"
         return $ERR_SYSTEM
     fi
-    trap exit_handler EXIT
+
+    if [ -n "$PLOWSHARE_CURL" ]; then
+        if ! type -P "$PLOWSHARE_CURL" >/dev/null 2>&1; then
+            log_error "$NAME: \$PLOWSHARE_CURL is invalid, abort"
+            return $ERR_SYSTEM
+        fi
+        log_debug "using custom curl: $PLOWSHARE_CURL"
+    fi
+
+    if [ -n "$PLOWSHARE_JS" ]; then
+        if ! type -P "$PLOWSHARE_JS" >/dev/null 2>&1; then
+            log_error "$NAME: \$PLOWSHARE_JS is invalid, abort"
+            return $ERR_SYSTEM
+        fi
+        log_debug "using custom js: $PLOWSHARE_JS"
+    fi
+
+    # Shutdown cleanups:
+    # - Restore proper colors (just in case)
+    # - Remove temporal files created by create_tempfile
+    trap 'log_notice_norc ""; rm -f "$TMPDIR/$(basename_file $0).$$".*' EXIT TERM
+
+    # SIGCONT notification
+    trap 'CONT_SIGNAL=$(date +%s)' CONT
 }
 
 # Check existence of executable in $PATH
