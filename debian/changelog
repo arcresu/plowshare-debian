@@ -1,3 +1,9 @@
+plowshare (2.1.6-1~bpo8+1) jessie-backports; urgency=medium
+
+  * Rebuild for jessie-backports.
+
+ -- Carl Suster <carl@contraflo.ws>  Sun, 01 Jan 2017 13:28:18 +1100
+
 plowshare (2.1.6-1) unstable; urgency=medium
 
   * New upstream release.
